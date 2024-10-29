@@ -95,8 +95,9 @@ export default function Register() {
                                             </svg>
                                         </div>
                                     </div>
-                                    <p className="hidden text-xs text-red-600 mt-2" id="email-error">Please include a
-                                        valid email address so we can get back to you</p>
+                                    {errors && errors.email && (
+                                        <p className=" text-xs text-red-600 mt-2" id="email-error">{errors.email}</p>
+                                    )}
                                 </div>
 
 
@@ -137,8 +138,11 @@ export default function Register() {
                                             </svg>
                                         </div>
                                     </div>
-                                    <p className="hidden text-xs text-red-600 mt-2" id="confirm-password-error">Password
-                                        does not match the password</p>
+                                    {errors && errors.password && (
+                                        <p className="text-xs text-red-600 mt-2" id="confirm-password-error">
+                                            {errors.password}
+                                        </p>
+                                    )}
                                 </div>
 
                                 <button type="submit"

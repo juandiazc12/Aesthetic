@@ -1,6 +1,8 @@
-import {Link, useForm} from "@inertiajs/react";
+import {Link, useForm, usePage} from "@inertiajs/react";
 
 export default function Login() {
+
+    const props = usePage().props
 
     const {data, post, errors, setData} = useForm({
         email: '',
@@ -22,8 +24,9 @@ export default function Login() {
                         <h1 className="block text-2xl font-bold text-gray-800 dark:text-white">Sign in</h1>
                         <p className="mt-2 text-sm text-gray-600 dark:text-neutral-400">
                             Don't have an account yet?
-                            <Link className="text-blue-600 decoration-2 hover:underline focus:outline-none focus:underline font-medium dark:text-blue-500"
-                               href="/customer/register">
+                            <Link
+                                className="text-blue-600 decoration-2 hover:underline focus:outline-none focus:underline font-medium dark:text-blue-500"
+                                href="/customer/register">
                                 Sign up here
                             </Link>
                         </p>
@@ -38,7 +41,8 @@ export default function Login() {
                                     <label htmlFor="email" className="block text-sm mb-2 dark:text-white">Email
                                         address</label>
                                     <div className="relative">
-                                        <input type="email" id="email" name="email" value={data.email} onChange={e => setData({...data, email: e.target.value})}
+                                        <input type="email" id="email" name="email" value={data.email}
+                                               onChange={e => setData({...data, email: e.target.value})}
                                                className="py-3 px-4 block w-full border-gray-200 rounded-lg text-sm focus:border-blue-500 focus:ring-blue-500 disabled:opacity-50 disabled:pointer-events-none dark:bg-neutral-900 dark:border-neutral-700 dark:text-neutral-400 dark:placeholder-neutral-500 dark:focus:ring-neutral-600"
                                                required aria-describedby="email-error"/>
                                         <div className="hidden absolute inset-y-0 end-0 pointer-events-none pe-3">
@@ -50,9 +54,11 @@ export default function Login() {
                                             </svg>
                                         </div>
                                     </div>
-                                    <p className="hidden text-xs text-red-600 mt-2" id="email-error">Please include a
-                                        valid
-                                        email address so we can get back to you</p>
+                                    {props.errors.email && (
+                                        <p className="text-xs text-red-600 mt-2" id="email-error">
+                                            {props.errors.email}
+                                        </p>
+                                    )}
                                 </div>
 
                                 <div>
@@ -64,7 +70,8 @@ export default function Login() {
                                     </div>
                                     <div className="relative">
                                         <input type="password" id="password" name="password"
-                                               value={data.password} onChange={e => setData({...data, password: e.target.value})}
+                                               value={data.password}
+                                               onChange={e => setData({...data, password: e.target.value})}
                                                className="py-3 px-4 block w-full border-gray-200 rounded-lg text-sm focus:border-blue-500 focus:ring-blue-500 disabled:opacity-50 disabled:pointer-events-none dark:bg-neutral-900 dark:border-neutral-700 dark:text-neutral-400 dark:placeholder-neutral-500 dark:focus:ring-neutral-600"
                                                required aria-describedby="password-error"/>
                                         <div className="hidden absolute inset-y-0 end-0 pointer-events-none pe-3">
@@ -91,7 +98,6 @@ export default function Login() {
                                             me</label>
                                     </div>
                                 </div>
-
 
                                 <button type="submit"
                                         className="w-full py-3 px-4 inline-flex justify-center items-center gap-x-2 text-sm font-medium rounded-lg border border-transparent bg-blue-600 text-white hover:bg-blue-700 focus:outline-none focus:bg-blue-700 disabled:opacity-50 disabled:pointer-events-none">Sign

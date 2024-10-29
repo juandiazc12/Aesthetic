@@ -8,6 +8,6 @@ export default function Welcome() {
     console.log(props)
 
     return (
-        <div>Hola con laravel y react</div>
+        <div className="container mx-auto">Hola con laravel y react</div>
     )
 }
