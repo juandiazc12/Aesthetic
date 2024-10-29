@@ -24,6 +24,7 @@ return new class extends Migration {
             $table->date('birth_date')->nullable();
             $table->string('profile_picture')->nullable();
             $table->enum('status', ['active', 'suspended'])->default('active');
+            $table->string('password');
             $table->timestamps();
         });
     }

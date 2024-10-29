@@ -3,10 +3,13 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Foundation\Auth\User;
 
-class Customer extends Model
+
+class Customer extends User
 {
+
+    use HasFactory;
 
     protected $fillable = [
         'first_name',
@@ -24,6 +27,7 @@ class Customer extends Model
         'preferences',
         'is_vip',
         'notes',
+        'password',
     ];
 
     public function bookings(): \Illuminate\Database\Eloquent\Relations\HasMany
