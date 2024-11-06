@@ -1,4 +1,5 @@
 import {Link, useForm, usePage} from "@inertiajs/react";
+import {FormEvent} from "react";
 
 export default function Login() {
 
@@ -9,7 +10,7 @@ export default function Login() {
         password: '',
     });
 
-    const handleSubmit = (e) => {
+    const handleSubmit = (e: FormEvent) => {
         e.preventDefault();
         post('/customer/login');
     }

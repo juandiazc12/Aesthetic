@@ -1,9 +1,15 @@
 import {Link, usePage} from "@inertiajs/react";
+import React, {ReactElement} from "react";
+import {Customer} from "../../Interfaces/Customer";
 
-export default function Layout({children}) {
-    const props = usePage().props;
-    console.log(props)
+type PageProps = {
+    customer: Customer
+}
 
+
+export default function Layout({children: children}: { children: ReactElement }) {
+
+    const props = usePage<PageProps>().props;
 
     return (
         <>

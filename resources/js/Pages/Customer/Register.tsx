@@ -1,4 +1,5 @@
 import {useForm} from "@inertiajs/react";
+import {FormEvent} from "react";
 
 export default function Register() {
 
@@ -10,7 +11,7 @@ export default function Register() {
         password_confirmation: '',
     });
 
-    const handleSubmit = (e) => {
+    const handleSubmit = (e: FormEvent) => {
         e.preventDefault();
         post('/customer/register');
     }
