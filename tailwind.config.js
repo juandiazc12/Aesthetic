@@ -10,6 +10,7 @@ export default {
         './resources/**/*.blade.php',
         './resources/**/*.js',
         './resources/**/*.jsx',
+        './resources/**/*.tsx',
         './resources/**/*.vue',
         'node_modules/preline/dist/*.js',
     ],
