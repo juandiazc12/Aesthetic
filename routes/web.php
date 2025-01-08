@@ -29,3 +29,4 @@ Route::get('/booking', function () {
 Route::get('/booking/success', function () {
     return Inertia\Inertia::render('BookingSuccess', []);
 });
+

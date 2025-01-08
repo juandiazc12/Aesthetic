@@ -18,7 +18,7 @@ export default function Layout({children: children}: { children: ReactElement })
                 <div className="grid justify-center sm:grid-cols-2 sm:items-center gap-4">
                     <div className="flex items-center gap-x-3 md:gap-x-5">
                         <Link href="/">
-                            <img src="../../img/logo/logo.png" alt="Logo" className="w-10 h-10 md:w-14 md:h-14" />
+                            <img src="" alt="Logo" className="w-10 h-10 md:w-14 md:h-14" />
                         </Link>
                         <span className="text-2xl md:text-3xl font-bold text-gray-800 dark:text-white">
                             AESTHECTIC

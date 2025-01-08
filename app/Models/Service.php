@@ -1,21 +1,20 @@
 <?php
 
 namespace App\Models;
-
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Orchid\Attachment\Attachable;
+use Orchid\Filters\Filterable;
+use Orchid\Screen\AsSource;
 
 class Service extends Model
 {
-    //
+    use HasFactory,AsSource,Attachable,Filterable;
     protected $fillable = [
         'name',
-        'slug',
-        'icon',
         'image',
         'price',
-        'is_vip',
         'preferences',
-        'notes',
         'description',
         'duration',
         'status',
@@ -24,5 +23,7 @@ class Service extends Model
 
     protected $casts = [
         'preferences' => 'array',
+        'price' => 'decimal:2',
     ];
 }
+        

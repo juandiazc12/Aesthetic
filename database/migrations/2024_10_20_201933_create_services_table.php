@@ -13,16 +13,12 @@ return new class extends Migration {
         Schema::create('services', function (Blueprint $table) {
             $table->id();
             $table->string('name');
-            $table->string('slug');
-            $table->string('description');
-            $table->string('icon');
+            $table->text('description')->nullable();
             $table->string('image');
-            $table->string('price');
+            $table->decimal('price', 8, 2);
             $table->string('duration');
             $table->enum('status', ['active', 'suspended'])->default('active');
-            $table->boolean('is_vip')->default(false);
             $table->json('preferences')->nullable();
-            $table->text('notes')->nullable();
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
             $table->timestamps();
         });
