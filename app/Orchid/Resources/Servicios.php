@@ -10,12 +10,12 @@ use Orchid\Screen\Fields\Select;
 use Orchid\Screen\Fields\Relation;
 use Orchid\Screen\TD;
 
-class PostService extends Resource
+class Servicios extends Resource
 {
     public static $model = Service::class;
 
-    public static $name = 'Services';
-    public static $description = 'Manage your services';
+    public static $name = 'Servicios';
+    public static $description = 'Gestiona tus servicios';
 
     public function fields(): array
     {
@@ -41,7 +41,7 @@ class PostService extends Resource
 
             Input::make('duration')
                 ->type('text')
-                ->title('Duracion')
+                ->title('Duración')
                 ->placeholder('Duración del servicio'),
 
             Select::make('status')
@@ -61,26 +61,26 @@ class PostService extends Resource
     public function columns(): array
     {
         return [
-            TD::make('name', 'Name')
+            TD::make('name', 'Nombre')
                 ->sort()
                 ->filter(TD::FILTER_TEXT)
                 ->render(function ($service) {
                     return $service->name;
                 }),
 
-            TD::make('price', 'Price')
+            TD::make('price', 'Precio')
                 ->sort()
                 ->render(function ($service) {
                     return '$' . number_format($service->price, 2);
                 }),
 
-            TD::make('status', 'Status')
+            TD::make('status', 'modo')
                 ->sort()
                 ->render(function ($service) {
                     return ucfirst($service->status);
                 }),
 
-            TD::make('created_at', 'Created At')
+            TD::make('created_at', 'Creado')
                 ->sort()
                 ->render(function ($service) {
                     return $service->created_at->format('Y-m-d H:i:s');

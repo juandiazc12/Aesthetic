@@ -36,11 +36,11 @@ class PlatformProvider extends OrchidServiceProvider
         return [
             
 
-            Menu::make(__('Users'))
+            Menu::make(__('Usuarios'))
                 ->icon('bs.people')
                 ->route('platform.systems.users')
                 ->permission('platform.systems.users')
-                ->title(__('Access Controls')),
+                ->title(__('Controles de acceso')),
 
             Menu::make(__('Roles'))
                 ->icon('bs.shield')
@@ -62,9 +62,9 @@ class PlatformProvider extends OrchidServiceProvider
     public function permissions(): array
     {
         return [
-            ItemPermission::group(__('System'))
+            ItemPermission::group(__('Permisos'))
                 ->addPermission('platform.systems.roles', __('Roles'))
-                ->addPermission('platform.systems.users', __('Users')),
+                ->addPermission('platform.systems.users', __('Usuarios')),
         ];
     }
 }

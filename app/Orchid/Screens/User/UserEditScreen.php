@@ -48,7 +48,7 @@ class UserEditScreen extends Screen
      */
     public function name(): ?string
     {
-        return $this->user->exists ? 'Edit User' : 'Create User';
+        return $this->user->exists ? 'EDITAR USUARIO' : 'CREAR USUARIO';
     }
 
     /**
@@ -56,7 +56,7 @@ class UserEditScreen extends Screen
      */
     public function description(): ?string
     {
-        return 'User profile and privileges, including their associated role.';
+        return 'Perfil y privilegios de usuario, incluido su rol asociado.';
     }
 
     public function permission(): ?iterable
@@ -74,19 +74,19 @@ class UserEditScreen extends Screen
     public function commandBar(): iterable
     {
         return [
-            Button::make(__('Impersonate user'))
+            Button::make(__('Suplantar'))
                 ->icon('bg.box-arrow-in-right')
-                ->confirm(__('You can revert to your original state by logging out.'))
+                ->confirm(__('Puedes volver a tu estado original cerrando la sesión.'))
                 ->method('loginAs')
                 ->canSee($this->user->exists && $this->user->id !== \request()->user()->id),
 
-            Button::make(__('Remove'))
+            Button::make(__('Eliminar'))
                 ->icon('bs.trash3')
-                ->confirm(__('Once the account is deleted, all of its resources and data will be permanently deleted. Before deleting your account, please download any data or information that you wish to retain.'))
+                ->confirm(__('Una vez que se elimine la cuenta, todos sus recursos y datos se eliminarán de forma permanente. Antes de eliminar su cuenta, descargue todos los datos o la información que desee conservar.'))
                 ->method('remove')
                 ->canSee($this->user->exists),
 
-            Button::make(__('Save'))
+            Button::make(__('Guardar'))
                 ->icon('bs.check-circle')
                 ->method('save'),
         ];
@@ -100,10 +100,10 @@ class UserEditScreen extends Screen
         return [
 
             Layout::block(UserEditLayout::class)
-                ->title(__('Profile Information'))
-                ->description(__('Update your account\'s profile information and email address.'))
+                ->title(__('Información del perfil'))
+                ->description(__('Actualice la información del perfil y la dirección de correo electrónico de su cuenta.'))
                 ->commands(
-                    Button::make(__('Save'))
+                    Button::make(__('Guardar'))
                         ->type(Color::BASIC)
                         ->icon('bs.check-circle')
                         ->canSee($this->user->exists)
@@ -111,10 +111,10 @@ class UserEditScreen extends Screen
                 ),
 
             Layout::block(UserPasswordLayout::class)
-                ->title(__('Password'))
-                ->description(__('Ensure your account is using a long, random password to stay secure.'))
+                ->title(__('Contraseña'))
+                ->description(__('Asegúrese de que su cuenta utilice una contraseña larga y aleatoria para mantenerla segura.'))
                 ->commands(
-                    Button::make(__('Save'))
+                    Button::make(__('Guardar'))
                         ->type(Color::BASIC)
                         ->icon('bs.check-circle')
                         ->canSee($this->user->exists)
@@ -123,9 +123,9 @@ class UserEditScreen extends Screen
 
             Layout::block(UserRoleLayout::class)
                 ->title(__('Roles'))
-                ->description(__('A Role defines a set of tasks a user assigned the role is allowed to perform.'))
+                ->description(__('Un rol define un conjunto de tareas que un usuario al que se le asigna el rol puede realizar.'))
                 ->commands(
-                    Button::make(__('Save'))
+                    Button::make(__('Guardar'))
                         ->type(Color::BASIC)
                         ->icon('bs.check-circle')
                         ->canSee($this->user->exists)
@@ -133,10 +133,10 @@ class UserEditScreen extends Screen
                 ),
 
             Layout::block(RolePermissionLayout::class)
-                ->title(__('Permissions'))
-                ->description(__('Allow the user to perform some actions that are not provided for by his roles'))
+                ->title(__('Permisos'))
+                ->description(__('Permitir al usuario realizar algunas acciones que no están previstas en sus roles'))
                 ->commands(
-                    Button::make(__('Save'))
+                    Button::make(__('Guardar'))
                         ->type(Color::BASIC)
                         ->icon('bs.check-circle')
                         ->canSee($this->user->exists)
@@ -174,7 +174,7 @@ class UserEditScreen extends Screen
 
         $user->replaceRoles($request->input('user.roles'));
 
-        Toast::info(__('User was saved.'));
+        Toast::info(__('El usuario fue guardado.'));
 
         return redirect()->route('platform.systems.users');
     }
@@ -188,7 +188,7 @@ class UserEditScreen extends Screen
     {
         $user->delete();
 
-        Toast::info(__('User was removed'));
+        Toast::info(__('El usuario fue eliminado'));
 
         return redirect()->route('platform.systems.users');
     }
@@ -200,7 +200,7 @@ class UserEditScreen extends Screen
     {
         Impersonation::loginAs($user);
 
-        Toast::info(__('You are now impersonating this user'));
+        Toast::info(__('Ahora estás suplantando a este usuario.'));
 
         return redirect()->route(config('platform.index'));
     }
