@@ -20,7 +20,7 @@ export interface Daum {
     image: string
     description: string
     price: string
-    status: 'activo' | 'suspendido' // Añadimos el tipo para 'status' (activo o suspendido)
+    status: 'active' | 'suspended' // Añadimos el tipo para 'status' (activo o suspendido)
     created_at: string
     updated_at: string
 }

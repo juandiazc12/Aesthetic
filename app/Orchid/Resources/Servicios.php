@@ -52,9 +52,7 @@ class Servicios extends Resource
                 ])
                 ->required(),
 
-            Relation::make('user_id')
-                ->title('Usuario')
-                ->fromModel(\App\Models\User::class, 'name'),
+            
         ];
     }
 

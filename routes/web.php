@@ -30,3 +30,5 @@ Route::get('/booking/success', function () {
     return Inertia\Inertia::render('BookingSuccess', []);
 });
 
+//paso de serviceList a service
+Route::get('/service/{id}', [Services::class, 'show'])->name('service.show');
