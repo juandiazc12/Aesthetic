@@ -14,7 +14,22 @@ class Booking extends Model
         'service_id',
         'scheduled_at',
         'status',
-        'notes'
+        'notes',
+        'professional_id'
     ];
 
+    public function service()
+    {
+        return $this->belongsTo(Service::class);
+    }
+
+    public function professional()
+    {
+        return $this->belongsTo(user::class);
+    }
+
+    public function customer()
+    {
+        return $this->belongsTo(customer::class, 'customer_id');
+    }
 }

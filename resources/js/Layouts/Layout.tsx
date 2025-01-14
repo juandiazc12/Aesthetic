@@ -20,9 +20,11 @@ export default function Layout({children: children}: { children: ReactElement })
                         <Link href="/">
                             <img src="" alt="Logo" className="w-10 h-10 md:w-14 md:h-14" />
                         </Link>
+                        <Link href="/">
                         <span className="text-2xl md:text-3xl font-bold text-gray-800 dark:text-white">
                             AESTHECTIC
                         </span>
+                        </Link>
                     </div>
 
 
