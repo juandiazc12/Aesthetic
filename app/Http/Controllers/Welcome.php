@@ -19,6 +19,7 @@ class Welcome extends Controller
                 'slug' => $service->slug,
                 'description' => $service->description,
                 'price' => $service->price,
+                'duration' => $service->duration,
                 'status' => $service->status,
                 'created_at' => $service->created_at,
                 'updated_at' => $service->updated_at,

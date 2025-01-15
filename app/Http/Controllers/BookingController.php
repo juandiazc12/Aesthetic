@@ -11,19 +11,34 @@ use Inertia\Inertia;
 class BookingController extends Controller
 {
     // Mostrar la vista de la reserva y los servicios disponibles
-    public function show(Service $service)
+    public function show()
     {
         // Obtener los usuarios que tienen el rol de 'profesional'
         $professionals = User::whereHas('roles', function ($query) {
             $query->where('slug', 'profesional'); // Filtrar por el rol 'profesional'
         })->get();
 
-        return Inertia::render('Booking/booking', [
-            'service' => $service,
-            'professionals' => $professionals,
-        ]);
-    }
+       
+    
 
+    // Obtener los servicios activos
+    $services = Service::where('status', 'active')
+    ->get()
+    ->map(function ($service) {
+        return [
+            'id' => $service->id,
+            'name' => $service->name,
+            'description' => $service->description,
+            'price' => number_format($service->price, 2),
+            'duration' => $service->duration,
+            'status' => $service->status,
+        ];
+    });
+    return Inertia::render('Booking/booking', [
+        'initialServices' => $services,
+        
+    ]);
+    }
     // Guardar la reserva
     public function store(Request $request)
     {

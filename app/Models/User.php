@@ -2,36 +2,24 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
+use Orchid\Filters\Types\Like;
+use Orchid\Filters\Types\Where;
+use Orchid\Filters\Types\WhereDateStartEnd;
+use Orchid\Platform\Models\User as Authenticatable;
 
-class User extends Model
+class User extends Authenticatable
 {
-    use HasFactory;
-
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array
+     */
     protected $fillable = [
         'name',
         'email',
-        'password', // Si es necesario para autenticación
+        'password',
     ];
 
-    // Relación muchos a muchos con roles a través de la tabla role_users
-    public function roles()
-    {
-        return $this->belongsToMany(Role::class, 'role_users');
-    }
-
-    // Comprobación si el usuario tiene un rol específico
-    public function hasRole($role)
-    {
-        return $this->roles()->where('slug', $role)->exists();
-    }
-
-    // Relación con bookings (reservas) como profesional
-    public function bookings()
-    {
-        return $this->hasMany(Booking::class, 'professional_id');
-    }
     /**
      * The attributes excluded from the model's JSON form.
      *
@@ -79,4 +67,3 @@ class User extends Model
         'created_at',
     ];
 }
-

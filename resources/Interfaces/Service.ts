@@ -20,6 +20,7 @@ export interface Daum {
     image: string
     slug: string
     description: string
+    duration:string
     price: string
     status: 'active' | 'suspended' | null
     created_at: string

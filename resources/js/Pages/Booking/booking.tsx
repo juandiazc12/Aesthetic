@@ -1,7 +1,22 @@
 import React, { useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { Services, Daum } from '@/Interfaces/Service';
 
-export default function Booking() {
+
+// Add TypeScript interfaces
+interface Service {
+  id: number;
+  name: string;
+  price: number;
+  duration: number;
+  description?: string;
+}
+
+interface Props {
+  initialServices: Daum[];
+}
+
+export default function Booking({initialServices}: Props) {
   const today = new Date();
   const currentDay = today.getDate();
   const currentMonth = today.getMonth();
@@ -14,12 +29,8 @@ export default function Booking() {
   const [selectedServices, setSelectedServices] = useState<{ name: string; price: number; duration: number }[]>([]);
   const [selectedProfessional, setSelectedProfessional] = useState('');
 
-  const services = [
-    { name: 'Corte de Cabello', price: 20000, duration: 30 },
-    { name: 'Manicure', price: 15000, duration: 45 },
-    { name: 'Masaje Relajante', price: 50000, duration: 60 },
-    { name: 'Tratamiento Facial', price: 40000, duration: 50 },
-  ];
+  const [services, setServices] = useState<Daum[]>(initialServices);
+
 
   const professionals = ['Profesional 1', 'Profesional 2', 'Profesional 3'];
 
@@ -32,13 +43,18 @@ export default function Booking() {
     NOCHE: ['18:00', '19:00', '20:00', '21:00', '22:00'],
   };
 
-  const handleAddService = (service: { name: string; price: number; duration: number }) => {
-    setSelectedServices((prev) => [...prev, service]);
+  const handleAddService = (service: Daum) => {
+    setSelectedServices((prev) => [...prev, { 
+      ...service, 
+      duration: 30,
+      price: Number(service.price)
+    }]);
   };
 
   const handleRemoveService = (index: number) => {
     setSelectedServices((prev) => prev.filter((_, i) => i !== index));
   };
+
 
   const totalPrice = selectedServices.reduce((total, service) => total + service.price, 0);
   const totalDuration = selectedServices.reduce((total, service) => total + service.duration, 0);

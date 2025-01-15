@@ -16,7 +16,7 @@ class Services extends Controller
                 'image' => $service->image,
                 'description' => $service->description,
                 'price' => $service->price,
-                'duration' => $duration->duration,
+                'duration' => $service->duration,
                 'status' => $service->status,
                 'created_at' => $service->created_at,
                 'updated_at' => $service->updated_at,
