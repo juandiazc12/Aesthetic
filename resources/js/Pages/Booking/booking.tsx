@@ -1,22 +1,13 @@
 import React, { useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { Services, Daum } from '@/Interfaces/Service';
-
-
-// Add TypeScript interfaces
-interface Service {
-  id: number;
-  name: string;
-  price: number;
-  duration: number;
-  description?: string;
-}
+import { Daum } from '@/Interfaces/Service';
+import Service from '../Services/Service';
 
 interface Props {
   initialServices: Daum[];
 }
 
-export default function Booking({initialServices}: Props) {
+export default function Booking({ initialServices }: Props) {
   const today = new Date();
   const currentDay = today.getDate();
   const currentMonth = today.getMonth();
@@ -26,13 +17,8 @@ export default function Booking({initialServices}: Props) {
   const [selectedDate, setSelectedDate] = useState(currentDay);
   const [timeOfDay, setTimeOfDay] = useState<TimeOfDay>('DIA');
   const [selectedTime, setSelectedTime] = useState('');
-  const [selectedServices, setSelectedServices] = useState<{ name: string; price: number; duration: number }[]>([]);
-  const [selectedProfessional, setSelectedProfessional] = useState('');
-
-  const [services, setServices] = useState<Daum[]>(initialServices);
-
-
-  const professionals = ['Profesional 1', 'Profesional 2', 'Profesional 3'];
+  const [selectedServices, setSelectedServices] = useState<Daum[]>([initialServices[0]]);
+  const [showServiceList, setShowServiceList] = useState(false);
 
   const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
   const days = Array.from({ length: daysInMonth - currentDay + 1 }, (_, i) => currentDay + i);
@@ -44,20 +30,23 @@ export default function Booking({initialServices}: Props) {
   };
 
   const handleAddService = (service: Daum) => {
-    setSelectedServices((prev) => [...prev, { 
-      ...service, 
-      duration: 30,
-      price: Number(service.price)
-    }]);
+    if (!selectedServices.some((s) => s.name === service.name)) {
+      setSelectedServices((prev) => [...prev, service]);
+    }
   };
 
   const handleRemoveService = (index: number) => {
     setSelectedServices((prev) => prev.filter((_, i) => i !== index));
   };
 
+  const formatDuration = (duration: number) => {
+    const hours = Math.floor(duration / 60);
+    const minutes = duration % 60;
+    return `${hours > 0 ? `${hours}h ` : ''}${minutes}min`;
+  };
 
-  const totalPrice = selectedServices.reduce((total, service) => total + service.price, 0);
-  const totalDuration = selectedServices.reduce((total, service) => total + service.duration, 0);
+  const totalPrice = selectedServices.reduce((total, service) => total + (Number(service.price) || 0), 0);
+  const totalDuration = selectedServices.reduce((total, service) => total + Number(service.duration), 0);
 
   return (
     <div className="max-w-md mx-auto p-4 space-y-6">
@@ -128,59 +117,44 @@ export default function Booking({initialServices}: Props) {
         </div>
       </div>
 
-      {/* Selección de servicios */}
+      {/* Servicios seleccionados */}
       <div>
-        <h2 className="text-lg font-bold mb-2">Selecciona un servicio</h2>
-        <div className="grid grid-cols-2 gap-2">
-          {services.map((service) => (
-            <button
-              key={service.name}
-              className="py-2 px-3 rounded bg-gray-100 text-gray-800 hover:bg-blue-500 hover:text-white"
-              onClick={() => handleAddService(service)}
-            >
-              {service.name} - ${service.price}
-            </button>
+        <h2 className="text-lg font-bold mb-2">Servicios Seleccionados</h2>
+        <ul className="mb-4">
+          {selectedServices.map((service, index) => (
+            <li key={index} className="flex justify-between items-center mb-2">
+              <span>{service.name} <p> </p>${service.price} <p> </p>{service.duration}min</span>
+              <button className="text-red-500 hover:underline" onClick={() => handleRemoveService(index)}>
+                Eliminar
+              </button>
+            </li>
           ))}
-        </div>
+        </ul>
+        <p className="font-semibold">Total: ${totalPrice}</p>
+        <p className="font-semibold">Duración total: {formatDuration(totalDuration)}</p>
       </div>
 
-      {/* Servicios seleccionados */}
-      {selectedServices.length > 0 && (
-        <div className="border p-4 rounded-lg">
-          <h3 className="text-lg font-bold mb-2">Servicios Seleccionados</h3>
-          <ul>
-            {selectedServices.map((service, index) => (
-              <li key={index} className="flex justify-between items-center mb-2">
-                <span>{service.name}</span>
-                <button
-                  className="text-red-500 hover:underline"
-                  onClick={() => handleRemoveService(index)}
-                >
-                  Eliminar
-                </button>
-              </li>
-            ))}
-          </ul>
-          <p className="font-semibold">Total: ${totalPrice}</p>
-          <p className="font-semibold">Duración total: {totalDuration} minutos</p>
-        </div>
-      )}
-
-      {/* Selección de profesional */}
+      {/* Botón para mostrar/ocultar lista de servicios */}
       <div>
-        <h2 className="text-lg font-bold mb-2">Selecciona un profesional</h2>
-        <select
-          className="w-full p-2 border rounded-lg"
-          value={selectedProfessional}
-          onChange={(e) => setSelectedProfessional(e.target.value)}
+        <button
+          className="w-full bg-gray-100 py-2 text-gray-800 rounded-lg font-semibold hover:bg-gray-200"
+          onClick={() => setShowServiceList(!showServiceList)}
         >
-          <option value="">Seleccione un profesional</option>
-          {professionals.map((professional) => (
-            <option key={professional} value={professional}>
-              {professional}
-            </option>
-          ))}
-        </select>
+          {showServiceList ? 'Ocultar servicios' : 'Añadir servicios'}
+        </button>
+        {showServiceList && (
+          <div className="grid grid-cols-2 gap-2 mt-4">
+            {initialServices.map((service) => (
+              <button
+                key={service.name}
+                className="py-2 px-3 rounded bg-gray-100 text-gray-800 hover:bg-blue-500 hover:text-white"
+                onClick={() => handleAddService(service)}
+              >
+                {service.name} - ${service.price} - {formatDuration(service.duration)}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Botón confirmar */}
@@ -188,12 +162,12 @@ export default function Booking({initialServices}: Props) {
         className="w-full bg-blue-500 text-white py-3 rounded-lg font-semibold hover:bg-blue-600"
         onClick={() =>
           alert(
-            `Reserva realizada para el ${selectedDate}/${currentMonth + 1}/${currentYear} a las ${selectedTime} con ${selectedProfessional}. Servicios: ${selectedServices
+            `Reserva realizada para el ${selectedDate}/${currentMonth + 1}/${currentYear} a las ${selectedTime}. Servicios: ${selectedServices
               .map((s) => s.name)
               .join(', ')}.`
           )
         }
-        disabled={!selectedTime || !selectedProfessional || selectedServices.length === 0}
+        disabled={!selectedTime || selectedServices.length === 0}
       >
         Confirmar Reserva
       </button>

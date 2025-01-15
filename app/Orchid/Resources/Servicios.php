@@ -40,9 +40,9 @@ class Servicios extends Resource
                 ->required(),
 
             Input::make('duration')
-                ->type('text')
+                ->type('number')
                 ->title('Duración')
-                ->placeholder('Duración del servicio'),
+                ->placeholder('Duración del servicio en minutos'),
 
             Select::make('status')
                 ->title('Modo')
