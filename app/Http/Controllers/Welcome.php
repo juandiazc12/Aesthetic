@@ -15,7 +15,7 @@ class Welcome extends Controller
             return [
                 'id' => $service->id,
                 'name' => $service->name,
-                'image' => asset('storage/' . $service->image),
+                'image' =>  $service->image,
                 'slug' => $service->slug,
                 'description' => $service->description,
                 'price' => $service->price,

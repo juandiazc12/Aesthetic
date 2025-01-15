@@ -29,3 +29,5 @@ Route::post('/booking', [BookingController::class, 'store'])->name('booking.stor
 Route::get('/booking/success', function () {
     return Inertia::render('BookingSuccess', []);
 });
+
+Route::get('/bookings', [BookingController::class, 'index'])->name('bookings.index');

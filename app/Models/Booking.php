@@ -25,11 +25,19 @@ class Booking extends Model
 
     public function professional()
     {
-        return $this->belongsTo(user::class);
+        return $this->belongsTo(User::class, 'professional_id');
     }
 
     public function customer()
     {
         return $this->belongsTo(customer::class, 'customer_id');
+    }
+
+    public static function getBookingsByCustomer($customer_id)
+    {
+        return self::where('customer_id', $customer_id)
+            ->orderBy('scheduled_at', 'desc')
+            ->with('service', 'customer', 'professional')
+            ->get();
     }
 }

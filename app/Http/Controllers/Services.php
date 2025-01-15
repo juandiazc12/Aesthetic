@@ -2,6 +2,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Service;
+use App\Models\User;
 use Inertia\Inertia;
 
 class Services extends Controller
@@ -32,6 +33,10 @@ class Services extends Controller
     public function show($id): \Inertia\Response
     {
         $service = Service::findOrFail($id);
+        $professionals = User::whereHas('roles', function ($query) {
+            $query->where('slug', 'profesional'); // Filtrar por el rol 'profesional'
+        })->get();
+
 
         return Inertia::render('Services/Service', [
             'service' => [
@@ -44,6 +49,7 @@ class Services extends Controller
                 'created_at' => $service->created_at->format('Y-m-d H:i:s'),
                 'updated_at' => $service->updated_at->format('Y-m-d H:i:s'),
             ],
+            'professionals' => $professionals,
         ]);
     }
 }

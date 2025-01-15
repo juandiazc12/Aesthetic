@@ -1,7 +1,9 @@
 <?php
+
 namespace App\Orchid\Resources;
 
 use App\Models\Service;
+use Illuminate\Support\Facades\Auth;
 use Orchid\Crud\Resource;
 use Orchid\Screen\Fields\Input;
 use Orchid\Screen\Fields\TextArea;
@@ -9,6 +11,7 @@ use Orchid\Screen\Fields\Picture;
 use Orchid\Screen\Fields\Select;
 use Orchid\Screen\Fields\Relation;
 use Orchid\Screen\TD;
+
 
 class Servicios extends Resource
 {
@@ -52,7 +55,12 @@ class Servicios extends Resource
                 ])
                 ->required(),
 
-            
+            Input::make('user_id')
+                ->type('number')
+                ->hidden()
+                ->value(Auth::id())
+
+
         ];
     }
 
