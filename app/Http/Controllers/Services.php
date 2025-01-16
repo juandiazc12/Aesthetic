@@ -34,7 +34,7 @@ class Services extends Controller
     {
         $service = Service::findOrFail($id);
         $professionals = User::whereHas('roles', function ($query) {
-            $query->where('slug', 'profesional'); // Filtrar por el rol 'profesional'
+            $query->where('name', 'profesional'); // Filtrar por el rol 'profesional'
         })->get();
 
 
