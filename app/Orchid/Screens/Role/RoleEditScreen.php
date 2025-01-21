@@ -40,7 +40,7 @@ class RoleEditScreen extends Screen
      */
     public function name(): ?string
     {
-        return 'EDITAR ROL';
+        return 'ROLES';
     }
 
     /**

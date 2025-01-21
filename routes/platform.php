@@ -35,6 +35,7 @@ use Tabuna\Breadcrumbs\Trail;
 Route::screen('/main', PlatformScreen::class)
     ->name('platform.main');
 
+    
 // Platform > Profile
 Route::screen('profile', UserProfileScreen::class)
     ->name('platform.profile')
@@ -100,5 +101,3 @@ Route::screen('/examples/layouts', ExampleLayoutsScreen::class)->name('platform.
 Route::screen('/examples/grid', ExampleGridScreen::class)->name('platform.example.grid');
 Route::screen('/examples/charts', ExampleChartsScreen::class)->name('platform.example.charts');
 Route::screen('/examples/cards', ExampleCardsScreen::class)->name('platform.example.cards');
-
-//Route::screen('idea', Idea::class, 'platform.screens.idea');

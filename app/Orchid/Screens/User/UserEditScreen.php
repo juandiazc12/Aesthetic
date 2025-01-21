@@ -132,16 +132,7 @@ class UserEditScreen extends Screen
                         ->method('save')
                 ),
 
-            Layout::block(RolePermissionLayout::class)
-                ->title(__('Permisos'))
-                ->description(__('Permitir al usuario realizar algunas acciones que no están previstas en sus roles'))
-                ->commands(
-                    Button::make(__('Guardar'))
-                        ->type(Color::BASIC)
-                        ->icon('bs.check-circle')
-                        ->canSee($this->user->exists)
-                        ->method('save')
-                ),
+            
 
         ];
     }

@@ -20,6 +20,8 @@ class Servicios extends Resource
     public static $name = 'Servicios';
     public static $description = 'Gestiona tus servicios';
 
+    
+    
     public function fields(): array
     {
         return [
@@ -74,6 +76,12 @@ class Servicios extends Resource
                     return $service->name;
                 }),
 
+                TD::make('duration', 'Duracion')
+                ->sort()
+                ->render(function ($service) {
+                    return  number_format($service->duration) . ' min';
+                }),
+
             TD::make('price', 'Precio')
                 ->sort()
                 ->render(function ($service) {
@@ -107,5 +115,14 @@ class Servicios extends Resource
     public function actions(): array
     {
         return [];
+    }
+    /**
+     * Get the permission key for the resource.
+     *
+     * @return string|null
+     */
+    public static function permission(): ?string
+    {
+        return 'manage-services¿'; // Clave de permiso específica para este recurso
     }
 }

@@ -18,6 +18,7 @@ export interface Booking {
 
 export interface Professional {
   id: number
+  photo: string
   name: string
   email: string
   email_verified_at: any

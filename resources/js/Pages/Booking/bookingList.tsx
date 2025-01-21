@@ -1,6 +1,7 @@
 import {usePage} from "@inertiajs/react";
 import {Booking} from "@/Interfaces/Booking";
 import {getInitials} from "@/Pages/utils/helpers";
+import '@fortawesome/fontawesome-free/css/all.min.css';
 import React from "react";
 
 type Props = {
@@ -51,14 +52,14 @@ export default function BookingList() {
 
                     <a
                       className="py-2 px-3 inline-flex items-center gap-x-2 text-sm font-medium rounded-lg border border-transparent bg-blue-600 text-white hover:bg-blue-700 focus:outline-none focus:bg-blue-700 disabled:opacity-50 disabled:pointer-events-none"
-                      href="#">
+                      href="/">
                       <svg className="shrink-0 size-4" xmlns="http://www.w3.org/2000/svg" width="24" height="24"
                            viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"
                            strokeLinejoin="round">
                         <path d="M5 12h14"/>
                         <path d="M12 5v14"/>
                       </svg>
-                      Add user
+                      Agregar Servicio
                     </a>
                   </div>
                 </div>
@@ -114,7 +115,12 @@ export default function BookingList() {
                         <div className="flex items-center gap-x-3">
                           <div
                             className={`w-10 h-10 rounded-full flex items-center justify-center  ${colors[Math.floor(Math.random() * colors.length)]}`}>
-                            <span>{getInitials(booking.professional.name)}</span>
+                           {booking.professional.photo ? (
+                  <img
+            src={booking.professional.photo}
+            alt={booking.professional.name}/>
+                    ) : ( <span>{getInitials(booking.professional.name)}</span> 
+                    )}
                           </div>
                           <div className="grow">
                             <span
@@ -136,8 +142,6 @@ export default function BookingList() {
                           <div className="grow">
                             <span
                               className="block text-sm font-semibold text-gray-800 dark:text-neutral-200">{booking.service.name}</span>
-                            <span
-                              className="block text-sm text-gray-500 dark:text-neutral-500">{booking.service.description}</span>
                           </div>
                         </div>
                       </div>
@@ -156,9 +160,11 @@ export default function BookingList() {
                     <td className="size-px whitespace-nowrap">
                       <div className="px-6 py-1.5">
                         <a
-                          className="inline-flex items-center gap-x-1 text-sm text-blue-600 decoration-2 hover:underline focus:outline-none focus:underline font-medium dark:text-blue-500"
-                          href="#">
-                          Edit
+                          className="inline-flex items-center gap-x-1 text-sm text-blue-600 hover:text-blue-800 transition-all duration-300 transform hover:scale-110"
+                          href="#"
+                        >
+                          {/* Ícono de editar (lapiz) de Font Awesome */}
+                          <i className="fas fa-pencil-alt text-blue-600 hover:text-blue-800 transition-all duration-100 transform hover:scale-110"></i>
                         </a>
                       </div>
                     </td>
@@ -173,7 +179,7 @@ export default function BookingList() {
                 className="px-6 py-4 grid gap-3 md:flex md:justify-between md:items-center border-t border-gray-200 dark:border-neutral-700">
                 <div>
                   <p className="text-sm text-gray-600 dark:text-neutral-400">
-                    <span className="font-semibold text-gray-800 dark:text-neutral-200">12</span> results
+                    <span className="font-semibold text-gray-800 dark:text-neutral-200"></span> results
                   </p>
                 </div>
 
