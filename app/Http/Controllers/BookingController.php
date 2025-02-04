@@ -5,8 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\Service;
 use App\Models\Booking;
 use App\Models\User;
-
-// Usamos User en lugar de Professional
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
@@ -27,16 +25,12 @@ class BookingController extends Controller
         ]);
     }
 
-    // Mostrar la vista de la reserva y los servicios disponibles
     public function show()
     {
-        // Obtener los usuarios que tienen el rol de 'profesional'
         $professionals = User::whereHas('roles', function ($query) {
-            $query->where('slug', 'profesional'); // Filtrar por el rol 'profesional'
+            $query->where('slug', 'profesional');
         })->get();
 
-
-        // Obtener los servicios activos
         $services = Service::where('status', 'active')
             ->get()
             ->map(function ($service) {
@@ -44,17 +38,17 @@ class BookingController extends Controller
                     'id' => $service->id,
                     'name' => $service->name,
                     'description' => $service->description,
-                    'price' => number_format($service->price, 2),
+                    'price' => $service->price,
                     'duration' => $service->duration,
                     'status' => $service->status,
                 ];
             });
+
         return Inertia::render('Booking/booking', [
             'initialServices' => $services,
         ]);
     }
 
-    // Guardar la reserva
     public function store(Request $request)
     {
         if (!Auth::guard('customer')->check()) {
@@ -66,20 +60,21 @@ class BookingController extends Controller
             'customer_id' => 'required|exists:customers,id',
             'professional_id' => 'required|exists:users,id',
             'scheduled_at' => 'required|date',
+            'payment_method' => 'required|string',
+            'payment_status' => 'required|string',
+            'payment_transaction_id' => 'required|string',
+            'payment_amount' => 'required|numeric',
+            'card_type' => 'nullable|string',
+            'bank_name' => 'nullable|string',
         ]);
 
-        Booking::create([
-            'service_id' => $request->service_id,
-            'customer_id' => $request->customer_id,
-            'professional_id' => $request->professional_id,
-            'scheduled_at' => $request->scheduled_at,
-        ]);
+        $booking = Booking::create($request->all());
 
         return redirect()->route('bookings.index')->with([
             'flash' => [
                 'status_code' => 201,
-                'message' => __('Booking created successfully')
-            ]
+                'message' => __('Booking created successfully'),
+            ],
         ]);
     }
 }

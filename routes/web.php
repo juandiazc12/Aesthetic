@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\BookingController;
 use App\Http\Controllers\Services;
 use Inertia\Inertia;
+use App\Http\Controllers\BinLookController;
 
 Route::get('/', [\App\Http\Controllers\Welcome::class, 'index'])->name('welcome');
 Route::get('/service/{slug}', [\App\Http\Controllers\Services::class, 'show'])->name('service');
@@ -21,6 +22,7 @@ Route::middleware(['guest:customer'])->prefix('customer')->group(function () {
 
 Route::middleware([\App\Http\Middleware\RedirectIfNotCustomer::class])->prefix('customer')->group(function () {
     Route::get('/logout', [\App\Http\Controllers\AuthController::class, 'logout'])->name('customer.logout');
+    Route::get('/binlist/{bin}', [BinLookController::class, 'getBankInfo']);
 });
 
 Route::get('/booking/{service}', [BookingController::class, 'show'])->name('booking.show');
@@ -31,3 +33,5 @@ Route::get('/booking/success', function () {
 });
 
 Route::get('/bookings', [BookingController::class, 'index'])->name('bookings.index');
+
+Route::get('/api/binlist/{bin}', [BinLookController::class, 'getBankInfo']);

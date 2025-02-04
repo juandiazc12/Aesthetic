@@ -15,7 +15,13 @@ class Booking extends Model
         'scheduled_at',
         'status',
         'notes',
-        'professional_id'
+        'professional_id',
+        'payment_method',
+        'payment_status',
+        'payment_transaction_id',
+        'payment_amount',
+        'card_type',
+        'bank_name',
     ];
 
     public function service()
@@ -30,7 +36,7 @@ class Booking extends Model
 
     public function customer()
     {
-        return $this->belongsTo(customer::class, 'customer_id');
+        return $this->belongsTo(Customer::class, 'customer_id');
     }
 
     public static function getBookingsByCustomer($customer_id)
