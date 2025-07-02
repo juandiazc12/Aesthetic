@@ -11,6 +11,7 @@ class Welcome extends Controller
 
     public function index(): \Inertia\Response
     {
+                
         $services = \App\Models\Service::paginate(15)->through(function ($service) {
             return [
                 'id' => $service->id,

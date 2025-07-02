@@ -12,12 +12,14 @@
     "laravel-vite-plugin": "^1.1.1",
     "postcss": "^8.4.38",
     "tailwindcss": "^3.4.3",
-    "vite": "^5.4.11"
+    "vite": "^6.3.4"
   },
   "dependencies": {
     "@fortawesome/fontawesome-free": "^6.7.2",
     "@heroicons/react": "^2.1.5",
+    "@inertiajs/inertia": "^0.11.1",
     "@inertiajs/react": "^1.0.16",
+    "@mercadopago/sdk-react": "^1.0.2",
     "@stripe/react-stripe-js": "^3.1.1",
     "@stripe/stripe-js": "^5.6.0",
     "@tailwindcss/forms": "^0.5.9",

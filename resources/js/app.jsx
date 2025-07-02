@@ -2,6 +2,7 @@ import { createInertiaApp } from '@inertiajs/react'
 import { createRoot } from 'react-dom/client'
 import Layout from "@/Layouts/Layout.tsx";
 
+
 createInertiaApp({
     title: (title) =>
         title ? `${title} - Laravel Inertia React` : "Laravel Inertia React",

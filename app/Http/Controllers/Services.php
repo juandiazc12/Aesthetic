@@ -4,12 +4,16 @@ namespace App\Http\Controllers;
 use App\Models\Service;
 use App\Models\User;
 use Inertia\Inertia;
+use Illuminate\Support\Facades\Auth;
+
+use function Laravel\Prompts\error;
 
 class Services extends Controller
 {
     // Método para mostrar todos los servicios en la lista
     public function index(): \Inertia\Response
     {
+        
         $services = Service::paginate(15)->through(function ($service) {
             return [
                 'id' => $service->id,
@@ -30,8 +34,13 @@ class Services extends Controller
     }
 
     // Método para mostrar los detalles de un servicio específico
-    public function show($id): \Inertia\Response
+    public function show($id)
     {
+        $customer = Auth::guard('customer');
+        if (!$customer->check()) {  
+            return redirect()->route('customer.login');
+        }
+
         $service = Service::findOrFail($id);
         $professionals = User::whereHas('roles', function ($query) {
             $query->where('name', 'profesional'); // Filtrar por el rol 'profesional'

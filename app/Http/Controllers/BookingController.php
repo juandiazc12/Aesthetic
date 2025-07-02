@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Service;
 use App\Models\Booking;
 use App\Models\User;
+use App\Models\Professional;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
@@ -24,6 +25,7 @@ class BookingController extends Controller
             'bookings' => $bookings,
         ]);
     }
+
 
     public function show()
     {
@@ -48,6 +50,15 @@ class BookingController extends Controller
             'initialServices' => $services,
         ]);
     }
+
+    public function destroy($id)
+{
+    $booking = Booking::findOrFail($id);
+    $booking->delete();
+
+    return response()->json(['message' => 'Reserva eliminada exitosamente']);
+}
+
 
     public function store(Request $request)
     {

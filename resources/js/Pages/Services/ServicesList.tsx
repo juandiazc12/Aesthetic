@@ -8,9 +8,7 @@ interface Props {
 }
 
 export default function ServicesList({ services }: Props) {
-    console.log('Servicios activos:', services.data.filter(service => service.status === 'active')); // Filtrar y mostrar solo los activos en la consola
-
-    return (
+        return (
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
             {services.data
                 .filter((service: Daum) => service.status === 'active') // Filtrar servicios activos

@@ -11,6 +11,8 @@
         "laravel/cashier": "*",
         "laravel/framework": "^11.9",
         "laravel/tinker": "^2.9",
+        "laravel/ui": "*",
+        "mercadopago/dx-php": "*",
         "orchid/crud": "*",
         "orchid/platform": "*",
         "stripe/stripe-php": "*"

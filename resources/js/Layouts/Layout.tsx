@@ -103,7 +103,7 @@ export default function Layout({ children }: { children: React.ReactElement }) {
                       Reservas
                     </Link>
                     <Link
-                      href="/Settings"
+                      href="/customer/settings"
                       className="block px-4 py-2 text-sm text-gray-700 dark:text-neutral-200 hover:bg-gray-100 dark:hover:bg-neutral-800"
                     >
                       Configuración
@@ -131,11 +131,11 @@ export default function Layout({ children }: { children: React.ReactElement }) {
           <div className="grid grid-cols-1 sm:grid-cols-1 gap-4">
             {/* Links */}
             <div className="flex flex-wrap gap-4">
-              <Link href="/Pages/Tools/Blog">Blog</Link>
-              <Link href="/Pages/Tools/Description">Quiénes somos</Link>
-              <Link href="/Pages/Tools/PQRS">PQRS</Link>
-              <Link href="/Pages/Tools/Conditions">Condiciones del servicio </Link>
-              <Link href="/Pages/tools/Working">Oportunidades laborales</Link>
+              <Link href="/tools/blog">Blog</Link>
+              <Link href="/tools/about">Quiénes somos</Link>
+              <Link href="/tools/pqrs">PQRS</Link>
+              <Link href="/tools/terms">Condiciones del servicio</Link>
+              <Link href="/tools/careers">Oportunidades laborales</Link>
             </div>
 
             <hr></hr>
@@ -148,6 +148,7 @@ export default function Layout({ children }: { children: React.ReactElement }) {
                 aria-label="Whatsapp"
                 href="https://api.whatsapp.com/send?phone=+573217706324&text=Save%20this%20to%20your%20Favorites%20-%20@Aesthectic"
                 className="relative group transition-transform duration-300 transform hover:scale-110"
+                target="_blank"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -165,8 +166,9 @@ export default function Layout({ children }: { children: React.ReactElement }) {
               <a
                 data-social="facebook"
                 aria-label="Facebook"
-                href="https://www.facebook.com/"
+                href="https://www.facebook.com/profile.php?id=61572660428636"
                 className="relative group transition-transform duration-300 transform hover:scale-110"
+                target="_blank"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -184,8 +186,9 @@ export default function Layout({ children }: { children: React.ReactElement }) {
               <a
                 data-social="instagram"
                 aria-label="Instagram"
-                href="https://www.instagram.com/"
+                href="https://www.instagram.com/aesthecticagenda26/"
                 className="relative group transition-transform duration-300 transform hover:scale-110"
+                target="_blank"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
