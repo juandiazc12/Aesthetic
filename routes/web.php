@@ -6,6 +6,7 @@ use App\Http\Controllers\Services;
 use App\Http\Controllers\PagesController; // Nuevo controlador
 use Inertia\Inertia;
 use App\Http\Controllers\BinLookController;
+use App\Http\Controllers\PaymentController;
 
 Route::get('/', [\App\Http\Controllers\Welcome::class, 'index'])->name('welcome');
 Route::get('/service/{slug}', [\App\Http\Controllers\Services::class, 'show'])->name('service');
@@ -64,4 +65,7 @@ Route::prefix('tools')->group(function () {
     Route::get('/careers', function () {
         return Inertia::render('Tools/Careers', []);
     })->name('tools.careers');
+
+    Route::post('/mercado-pago/preference', [PaymentController::class, 'createPreference']);
+
 });

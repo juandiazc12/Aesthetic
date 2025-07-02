@@ -39,5 +39,10 @@ return [
         'key' => env('STRIPE_KEY'),
         'secret' => env('STRIPE_SECRET'),
     ],
+    
+    'mercadopago' => [
+    'access_token' => env('MERCADOPAGO_ACCESS_TOKEN'),
+],
+
 
 ];

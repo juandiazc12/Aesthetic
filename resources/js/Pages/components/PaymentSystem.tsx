@@ -125,31 +125,37 @@ export function PaymentSystem({ amount, onPaymentComplete, onCancel }: PaymentSy
     setShowBanner(false);
   };
 
-  const handlePayment = async () => {
-    if (!selectedMethod) return;
+  const handlePayment = async () => {setIsProcessing(true);
+  setError(null);
 
-    setIsProcessing(true);
-    setError(null);
-    
-    try {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
+  try {
+    if (selectedMethod === 'cash') {
       const details: PaymentDetails = {
-        method: selectedMethod,
+        method: 'cash',
         status: 'completed',
         transactionId: Math.random().toString(36).substring(2, 15),
-        amount: amount,
-        ...(paymentDetails?.type === 'card' && { cardType: paymentDetails.entity }),
-        ...(paymentDetails?.type === 'transfer' && { bankName: paymentDetails.entity })
+        amount: amount
       };
-
       onPaymentComplete(details);
-    } catch (err: any) {
-      setError(err.message);
-    } finally {
-      setIsProcessing(false);
+    } else {
+      // Llama al backend para obtener el link de pago
+      const response = await fetch('http://localhost:8000/api/create-preference', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ amount })
+      });
+
+      const data = await response.json();
+      window.location.href = data.init_point; // Redirige al Checkout Pro de Mercado Pago
     }
-  };
+  } catch (err: any) {
+    setError("Error al procesar el pago.");
+  } finally {
+    setIsProcessing(false);
+  }
+};
 
   return (
     <div className="w-full max-w-md mx-auto bg-white rounded-lg shadow-md p-6">
