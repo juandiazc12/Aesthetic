@@ -40,9 +40,11 @@ return [
         'secret' => env('STRIPE_SECRET'),
     ],
     
-    'mercadopago' => [
-    'access_token' => env('MERCADOPAGO_ACCESS_TOKEN'),
-],
-
+  'mercadopago' => [
+        'access_token' => env('MERCADOPAGO_ACCESS_TOKEN'),
+        'public_key' => env('MERCADOPAGO_PUBLIC_KEY'),
+        'integrator_id' => env('MERCADOPAGO_INTEGRATOR_ID', null),
+        'environment' => env('MERCADOPAGO_SANDBOX', true) ? 'sandbox' : 'production',
+    ],
 
 ];

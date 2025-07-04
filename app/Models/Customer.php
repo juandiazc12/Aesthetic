@@ -35,8 +35,33 @@ class Customer extends User
         'remember_token',
     ];
 
-    public function bookings(): \Illuminate\Database\Eloquent\Relations\HasMany
+    // Relación con las reservas
+    public function bookings()
     {
         return $this->hasMany(Booking::class);
+    }
+
+    // Método para obtener el nombre completo
+    public function getFullNameAttribute()
+    {
+        return $this->name;
+    }
+
+    // Método para verificar si tiene reservas activas
+    public function hasActiveBookings()
+    {
+        return $this->bookings()->where('status', 'active')->exists();
+    }
+
+    // Método para obtener reservas pagadas
+    public function getPaidBookings()
+    {
+        return $this->bookings()->where('payment_status', 'paid')->get();
+    }
+
+    // Método para obtener reservas pendientes de pago
+    public function getPendingPaymentBookings()
+    {
+        return $this->bookings()->where('payment_status', 'pending')->get();
     }
 }
