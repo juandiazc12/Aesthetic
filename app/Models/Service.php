@@ -27,4 +27,27 @@ class Service extends Model
         'preferences' => 'array',
         'price' => 'decimal:2',
     ];
+
+    // Relación con reservas (bookings)
+    public function bookings()
+    {
+        return $this->hasMany(Booking::class);
+    }
+
+    // Relación con profesionales (muchos a muchos)
+    public function professionals()
+    {
+        return $this->belongsToMany(User::class, 'service_professional', 'service_id', 'professional_id');
+    }
+
+    // Método para obtener profesionales activos para este servicio
+    public function getActiveProfessionals()
+    {
+        return $this->professionals()
+            ->whereHas('roles', function ($query) {
+                $query->where('slug', 'profesional');
+            })
+            ->select('users.id', 'users.name', 'users.email', 'users.photo')
+            ->get();
+    }
 }

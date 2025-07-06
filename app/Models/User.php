@@ -74,6 +74,14 @@ class User extends Authenticatable
         'updated_at',
         'created_at',
     ];
+public function services()
+{
+    return $this->belongsToMany(Service::class, 'service_professional', 'professional_id', 'service_id');
+}
 
+public function bookings()
+{
+    return $this->hasMany(Booking::class, 'professional_id');
+}
 
 }

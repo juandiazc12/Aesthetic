@@ -1,14 +1,63 @@
-import { Daum } from "@/Interfaces/Service";
-import React, { useState } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { ChevronLeft, ChevronRight, Clock, User, Calendar } from "lucide-react";
 import { router, usePage } from "@inertiajs/react";
 import { Customer } from "@/Interfaces/Customer";
 import { getInitials } from "@/Pages/utils/helpers";
 import moment from "moment";
 import { PaymentSystem, PaymentDetails } from "../components/PaymentSystem";
 
+interface Service {
+  id: number;
+  name: string;
+  description: string;
+  price: string;
+  duration: number;
+  status: string;
+}
+
+interface Professional {
+  id: number;
+  photo: string;
+  name: string;
+  email: string;
+}
+
+interface TimeSlots {
+  morning: string[];
+  afternoon: string[];
+  evening: string[];
+}
+
+interface WeekDay {
+  date: string;
+  day_name: string;
+  day_name_es: string;
+  day_number: number;
+  month: number;
+  year: number;
+  formatted_date: string;
+  is_available: boolean;
+  is_today: boolean;
+  is_past: boolean;
+  booked_count: number;
+  slots_available: number;
+}
+
+interface WeekData {
+  week_days: WeekDay[];
+  week_start: string;
+  week_end: string;
+  week_offset: number;
+  professional_id: number;
+  week_title: string;
+  can_go_previous: boolean;
+  can_go_next: boolean;
+}
+
+type TimeOfDay = "morning" | "afternoon" | "evening";
+
 interface ComponentProps {
-  service: Daum;
+  service: Service;
 }
 
 type Props = {
@@ -16,242 +65,400 @@ type Props = {
   professionals: Professional[];
 };
 
-interface Professional {
-  id: number;
-  photo: string;
-  name: string;
-  email: string;
-  email_verified_at: any;
-  created_at: string;
-  updated_at: string;
-}
+const TIME_PERIODS = {
+  morning: { label: "MAÑANA", times: ["07:00", "08:00", "09:00", "10:00", "11:00"] },
+  afternoon: { label: "TARDE", times: ["12:00", "13:00", "14:00", "15:00", "16:00", "17:00"] },
+  evening: { label: "NOCHE", times: ["18:00", "19:00", "20:00", "21:00", "22:00"] },
+};
 
 export default function AddBooking({ service }: ComponentProps) {
   const { customer, professionals } = usePage<Props>().props;
 
-  const today = new Date();
-  const currentDay = today.getDate();
-  const currentMonth = today.getMonth();
-  const currentYear = today.getFullYear();
-  const currentHour = today.getHours(); // Hora actual
-
-  type TimeOfDay = "MAÑANA" | "TARDE" | "NOCHE";
-  const [selectedDate, setSelectedDate] = useState(currentDay);
-  const [timeOfDay, setTimeOfDay] = useState<TimeOfDay>("MAÑANA");
-  const [selectedTime, setSelectedTime] = useState<null | string>(null);
-  const [professionalId, setProfessionalId] = useState<null | number>(
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [timeOfDay, setTimeOfDay] = useState<TimeOfDay>("morning");
+  const [selectedTime, setSelectedTime] = useState<string | null>(null);
+  const [professionalId, setProfessionalId] = useState<number | null>(
     professionals.length === 1 ? professionals[0].id : null
   );
+  const [availableSlots, setAvailableSlots] = useState<TimeSlots>({
+    morning: [],
+    afternoon: [],
+    evening: [],
+  });
+  const [weekData, setWeekData] = useState<WeekData | null>(null);
+  const [weekOffset, setWeekOffset] = useState(0);
   const [showPayment, setShowPayment] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [loadingDates, setLoadingDates] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-  const days = Array.from(
-    { length: daysInMonth - currentDay + 1 },
-    (_, i) => currentDay + i
-  );
-
-  const schedules: Record<TimeOfDay, string[]> = {
-    MAÑANA: ["7:00", "8:00", "9:00", "10:00", "11:00"],
-    TARDE: ["12:00", "13:00", "14:00", "15:00", "16:00", "17:00"],
-    NOCHE: ["18:00", "19:00", "20:00", "21:00", "22:00"],
-  };
-
-  const handlePaymentComplete = (paymentDetails: PaymentDetails) => {
-    const scheduled_at = new Date(currentYear, currentMonth, selectedDate);
-    if (selectedTime) {
-      scheduled_at.setHours(parseInt(selectedTime.split(":")[0]));
-      scheduled_at.setMinutes(parseInt(selectedTime.split(":")[1]));
+  // Obtener fechas disponibles cuando cambia el profesional o el offset de semana
+  useEffect(() => {
+    if (professionalId) {
+      fetchAvailableDates();
     }
+  }, [professionalId, weekOffset]);
 
-    const dateFormat = moment(scheduled_at).format("YYYY-MM-DD HH:mm:ss");
-
-    router.post("/booking", {
-      service_id: service.id,
-      customer_id: customer.id,
-      professional_id: professionalId,
-      scheduled_at: dateFormat,
-      payment_method: paymentDetails.method,
-      payment_status: paymentDetails.status,
-      payment_transaction_id: paymentDetails.transactionId,
-      payment_amount: paymentDetails.amount,
-    });
-  };
-
-  const isTimePassed = (time: string): boolean => {
-    const [hour, minute] = time.split(":").map(Number);
-
-    const selectedDateObj = new Date(
-      currentYear,
-      currentMonth,
-      selectedDate,
-      hour,
-      minute
-    );
-    const now = new Date();
-
-    // Solo bloquea la hora si la fecha seleccionada es hoy y la hora ya ha pasado
-    return selectedDateObj < now;
-  };
-
-  const renderActionButton = () => {
-    if (showPayment) {
-      console.log("Service price:", service.price); // Para debug
-      return (
-        <div className="mt-6">
-          <PaymentSystem
-            amount={Number(service.price)}
-            onPaymentComplete={handlePaymentComplete}
-            onCancel={() => setShowPayment(false)}
-          />
-        </div>
-      );
+  // Obtener horarios disponibles cuando cambia la fecha o el profesional
+  useEffect(() => {
+    if (professionalId && selectedDate) {
+      fetchAvailableSlots();
     }
+  }, [professionalId, selectedDate]);
 
+  const fetchAvailableDates = async () => {
+    if (!professionalId) return;
+
+    setLoadingDates(true);
+    setError(null);
+
+    try {
+      const response = await fetch('/api/booking/available-dates', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+        },
+        body: JSON.stringify({
+          professional_id: professionalId,
+          week_offset: weekOffset,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Error al obtener fechas disponibles');
+      }
+
+      const data = await response.json();
+      setWeekData(data);
+      
+      // Limpiar selección de fecha si no está disponible en la nueva semana
+      if (selectedDate && !data.week_days.some((day: WeekDay) => day.date === selectedDate)) {
+        setSelectedDate(null);
+        setSelectedTime(null);
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error desconocido');
+      console.error('Error fetching available dates:', err);
+    } finally {
+      setLoadingDates(false);
+    }
+  };
+
+  const fetchAvailableSlots = async () => {
+    if (!professionalId || !selectedDate) return;
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch('/api/booking/available-slots', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+        },
+        body: JSON.stringify({
+          professional_id: professionalId,
+          date: selectedDate,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Error al obtener horarios disponibles');
+      }
+
+      const data = await response.json();
+      setAvailableSlots(data);
+      
+      // Limpiar selección de hora si no está disponible
+      if (selectedTime && !data[timeOfDay]?.includes(selectedTime)) {
+        setSelectedTime(null);
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error desconocido');
+      console.error('Error fetching available slots:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDateSelection = (date: string) => {
+    setSelectedDate(date);
+    setSelectedTime(null);
+  };
+
+  const handleTimeSelection = (time: string) => {
+    setSelectedTime(time);
+  };
+
+  const handleProfessionalSelection = (professionalId: number) => {
+    setProfessionalId(professionalId);
+    setSelectedDate(null);
+    setSelectedTime(null);
+    setWeekOffset(0); // Resetear a la semana actual
+  };
+
+  const handleWeekNavigation = (direction: 'prev' | 'next') => {
+    if (direction === 'prev' && weekOffset > 0) {
+      setWeekOffset(weekOffset - 1);
+    } else if (direction === 'next' && weekOffset < 12) {
+      setWeekOffset(weekOffset + 1);
+    }
+    setSelectedDate(null);
+    setSelectedTime(null);
+  };
+
+  const handlePaymentComplete = async (paymentDetails: PaymentDetails) => {
+    if (!selectedTime || !professionalId || !selectedDate) return;
+
+    const scheduledAt = new Date(selectedDate + ' ' + selectedTime);
+
+    try {
+      const response = await fetch('/api/booking/create', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+        },
+        body: JSON.stringify({
+          service_id: service.id,
+          professional_id: professionalId,
+          scheduled_at: moment(scheduledAt).format('YYYY-MM-DD HH:mm:ss'),
+          payment_method: paymentDetails.method,
+          payment_status: paymentDetails.status,
+          payment_transaction_id: paymentDetails.transactionId,
+          payment_amount: paymentDetails.amount,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Error al crear la reserva');
+      }
+
+      // Redirigir a página de éxito
+      router.visit('/booking/success');
+    } catch (error) {
+      console.error('Error creating booking:', error);
+      setError(error instanceof Error ? error.message : 'Error al procesar la reserva');
+    }
+  };
+
+  const selectedProfessional = professionals.find(p => p.id === professionalId);
+  const selectedDay = weekData?.week_days.find(day => day.date === selectedDate);
+
+  if (showPayment) {
     return (
-      <button
-        type="button"
-        onClick={() => {
-          console.log("Showing payment for amount:", service.price); // Para debug
-          setShowPayment(true);
-        }}
-        className="btn-primary w-full mt-6"
-        disabled={!selectedTime || !professionalId}
-      >
-        Continuar al pago ({service.price} €)
-      </button>
+      <div className="w-full max-w-[30rem]">
+   
+        <PaymentSystem
+          amount={Number(service.price)}
+          onPaymentComplete={handlePaymentComplete}
+          onCancel={() => setShowPayment(false)}
+        />
+      </div>
     );
-  };
+  }
 
   return (
-    <div className="w-full">
-      <div className="max-w-[30rem] flex flex-col gap-5">
-        {!showPayment && (
-          <>
-            {/* Selector de fecha */}
-            <div>
-              <h2 className="text-lg font-bold mb-2">Selecciona una fecha:</h2>
-              <div className="flex items-center justify-between mb-4 ">
-                <button
-                  className="p-2 hover:bg-gray-200 rounded-full"
-                  onClick={() => setSelectedDate(selectedDate - 1)}
-                >
-                  <ChevronLeft className="w-6 h-6 text-gray-600" />
-                </button>
-                <div className="flex space-x-2 overflow-x-auto">
-                  {days.map((day) => (
-                    <button
-                      key={day}
-                      className={`flex flex-col items-center min-w-[45px] py-2 px-3 rounded-full ${
-                        selectedDate === day
-                          ? "bg-blue-500 text-white"
-                          : "hover:bg-gray-200 text-gray-800"
-                      }`}
-                      onClick={() => setSelectedDate(day)}
-                    >
-                      <span className="text-xs">
-                        {new Date(currentYear, currentMonth, day)
-                          .toLocaleDateString("es-CO", { weekday: "short" })
-                          .toUpperCase()}
-                      </span>
-                      <span className="font-semibold">{day}</span>
-                    </button>
-                  ))}
-                </div>
-                <button
-                  className="p-2 hover:bg-gray-200 rounded-full"
-                  onClick={() => setSelectedDate(selectedDate + 1)}
-                >
-                  <ChevronRight className="w-6 h-6 text-gray-600" />
-                </button>
-              </div>
-            </div>
+    <div className="w-full max-w-[30rem] space-y-6">
+      {error && (
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+          {error}
+        </div>
+      )}
 
-            {/* Selector MAÑANA/TARDE/NOCHE */}
-            <div>
-              <h2 className="text-lg font-bold mb-2">Selecciona un horario</h2>
-              <div className="flex bg-gray-100 rounded-full p-1">
-                {(["MAÑANA", "TARDE", "NOCHE"] as const).map((time) => (
-                  <button
-                    key={time}
-                    className={`flex-1 py-2 text-sm rounded-full ${
-                      timeOfDay === time
-                        ? "bg-blue-500 text-white"
-                        : "text-gray-800 hover:bg-blue-100"
-                    }`}
-                    onClick={() => setTimeOfDay(time)}
-                  >
-                    {time}
-                  </button>
-                ))}
+      {/* Selector de Profesional */}
+      <div>
+        <h2 className="text-lg font-bold mb-3 flex items-center gap-2">
+          <User className="w-5 h-5" />
+          Selecciona un profesional
+        </h2>
+        <div className="grid gap-3">
+          {professionals.map((professional) => (
+            <button
+              key={professional.id}
+              className={`flex items-center gap-3 p-3 rounded-lg border transition-colors ${
+                professionalId === professional.id
+                  ? "bg-blue-500 text-white border-blue-500"
+                  : "bg-white hover:bg-gray-50 border-gray-200"
+              }`}
+              onClick={() => handleProfessionalSelection(professional.id)}
+            >
+              <div
+                className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                  professionalId === professional.id
+                    ? "bg-blue-700 text-white"
+                    : "bg-gray-100"
+                }`}
+              >
+                {professional.photo ? (
+                  <img
+                    src={professional.photo}
+                    alt={professional.name}
+                    className="w-10 h-10 rounded-full object-cover"
+                  />
+                ) : (
+                  <span className="text-sm font-medium">
+                    {getInitials(professional.name)}
+                  </span>
+                )}
               </div>
-            </div>
-
-            {/* Selector de hora */}
-            <div>
-              <h2 className="text-lg font-bold mb-2">Elige una hora</h2>
-              <div className="grid grid-cols-3 gap-2">
-                {schedules[timeOfDay].map((hour) => (
-                  <button
-                    key={hour}
-                    className={`py-2 px-3 rounded ${
-                      selectedTime === hour
-                        ? "bg-blue-500 text-white"
-                        : isTimePassed(hour)
-                        ? "bg-gray-300 text-gray-600 cursor-not-allowed"
-                        : "bg-gray-100 text-gray-800 hover:bg-blue-100"
-                    }`}
-                    onClick={() => !isTimePassed(hour) && setSelectedTime(hour)}
-                    disabled={isTimePassed(hour)}
-                  >
-                    {hour}
-                  </button>
-                ))}
+              <div className="text-left">
+                <div className="font-medium">{professional.name}</div>
+                <div className="text-sm opacity-75">{professional.email}</div>
               </div>
-            </div>
-
-            {/* Selector de profesionales */}
-            <div>
-              <h2 className="text-lg font-bold mb-2">
-                Selecciona un profesional
-              </h2>
-              <div className="flex flex-col gap-2">
-                {professionals.map((professional) => (
-                  <div
-                    key={professional.id}
-                    className={`flex gap-3 items-start border p-2 rounded-md cursor-pointer ${
-                      professionalId === professional.id
-                        ? "bg-blue-500 text-white "
-                        : "hover:bg-gray-200"
-                    }`}
-                    onClick={() => setProfessionalId(professional.id)}
-                  >
-                    <div
-                      className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                        professionalId === professional.id
-                          ? "bg-blue-700 text-white"
-                          : "bg-gray-100"
-                      }`}
-                    >
-                      {professional.photo ? (
-                        <img src={professional.photo} alt={professional.name} />
-                      ) : (
-                        <span>{getInitials(professional.name)}</span>
-                      )}
-                    </div>
-                    <div className="flex flex-col">
-                      <span>{professional.name}</span>
-                      <strong className="text-sm">{professional.email}</strong>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </>
-        )}
-
-        {/* El botón o componente de pago */}
-        <div className="mt-6">{renderActionButton()}</div>
+            </button>
+          ))}
+        </div>
       </div>
+
+      {/* Selector de Fecha - Barra de días de la semana */}
+      {professionalId && (
+        <div>
+          <h2 className="text-lg font-bold mb-3 flex items-center gap-2">
+            <Calendar className="w-5 h-5" />
+            Selecciona una fecha
+          </h2>
+          
+          {loadingDates ? (
+            <div className="flex justify-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+            </div>
+          ) : weekData ? (
+            <div className="bg-white border border-gray-200 rounded-lg p-4">
+              {/* Navegación de semanas */}
+              <div className="flex items-center justify-between mb-4">
+                <button
+                  onClick={() => handleWeekNavigation('prev')}
+                  disabled={!weekData.can_go_previous}
+                  className={`p-2 rounded-full ${
+                    weekData.can_go_previous
+                      ? 'hover:bg-gray-100 text-gray-600'
+                      : 'text-gray-300 cursor-not-allowed'
+                  }`}
+                >
+                  <ChevronLeft className="w-5 h-5" />
+                </button>
+                
+                <div className="text-center">
+                  <h3 className="font-medium text-gray-900">{weekData.week_title}</h3>
+                  <p className="text-sm text-gray-500">
+                    {weekOffset === 0 ? 'Esta semana' : `${weekOffset + 1} semana${weekOffset > 0 ? 's' : ''} adelante`}
+                  </p>
+                </div>
+                
+                <button
+                  onClick={() => handleWeekNavigation('next')}
+                  disabled={!weekData.can_go_next}
+                  className={`p-2 rounded-full ${
+                    weekData.can_go_next
+                      ? 'hover:bg-gray-100 text-gray-600'
+                      : 'text-gray-300 cursor-not-allowed'
+                  }`}
+                >
+                  <ChevronRight className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Días de la semana */}
+              <div className="grid grid-cols-7 gap-2">
+                {weekData.week_days.map((day) => (
+                  <button
+                    key={day.date}
+                    onClick={() => day.is_available && handleDateSelection(day.date)}
+                    disabled={!day.is_available}
+                    className={`p-3 rounded-lg text-center transition-colors ${
+                      !day.is_available
+                        ? 'bg-gray-50 text-gray-400 cursor-not-allowed'
+                        : selectedDate === day.date
+                        ? 'bg-blue-500 text-white'
+                        : day.is_today
+                        ? 'bg-blue-100 text-blue-600 hover:bg-blue-200'
+                        : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
+                    }`}
+                  >
+                    <div className="text-xs font-medium mb-1">{day.day_name_es.slice(0, 3)}</div>
+                    <div className="text-lg font-bold">{day.day_number}</div>
+                    {day.is_available && (
+                      <div className="text-xs text-gray-500 mt-1">
+                        {day.slots_available} slots
+                      </div>
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : null}
+        </div>
+      )}
+
+      {/* Selector de Horario */}
+      {professionalId && selectedDate && (
+        <div>
+          <h2 className="text-lg font-bold mb-3 flex items-center gap-2">
+            <Clock className="w-5 h-5" />
+            Selecciona un horario
+          </h2>
+          
+          {/* Selector de período */}
+          <div className="flex bg-gray-100 rounded-lg p-1 mb-4">
+            {Object.entries(TIME_PERIODS).map(([key, { label }]) => (
+              <button
+                key={key}
+                className={`flex-1 py-2 px-3 text-sm rounded-md transition-colors ${
+                  timeOfDay === key
+                    ? "bg-blue-500 text-white"
+                    : "text-gray-700 hover:bg-gray-200"
+                }`}
+                onClick={() => setTimeOfDay(key as TimeOfDay)}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+
+          {/* Horarios disponibles */}
+          {loading ? (
+            <div className="flex justify-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+            </div>
+          ) : (
+            <div className="grid grid-cols-3 gap-2">
+              {availableSlots[timeOfDay]?.map((time) => (
+                <button
+                  key={time}
+                  className={`py-2 px-3 rounded-md text-sm font-medium transition-colors ${
+                    selectedTime === time
+                      ? "bg-blue-500 text-white"
+                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  }`}
+                  onClick={() => handleTimeSelection(time)}
+                >
+                  {time}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {availableSlots[timeOfDay]?.length === 0 && !loading && (
+            <div className="text-center py-8 text-gray-500">
+              No hay horarios disponibles para este período
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Botón de Continuar */}
+      {selectedTime && professionalId && selectedDate && (
+        <button
+          onClick={() => setShowPayment(true)}
+          className="w-full bg-blue-500 text-white py-3 px-6 rounded-lg font-medium hover:bg-blue-600 transition-colors"
+        >
+          Continuar al pago ({service.price} €)
+        </button>
+      )}
     </div>
   );
 }
