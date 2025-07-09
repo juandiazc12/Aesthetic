@@ -38,31 +38,30 @@ Route::middleware(['auth:customer'])->group(function () {
     // Páginas principales
     Route::get('/booking/{service?}', [BookingController::class, 'show'])->name('booking.show');
     Route::get('/booking/{booking}/confirmation', [BookingController::class, 'confirmation'])->name('booking.confirmation');
-    Route::get('/mis-reservas', [BookingController::class, 'list'])->name('booking.list');
+    Route::get('/bookings', [BookingController::class, 'list'])->name('booking.BookingList');
     
     // APIs para crear y confirmar reservas
     Route::post('/booking', [BookingController::class, 'store'])->name('booking.store');
     Route::post('/booking/{booking}/confirm', [BookingController::class, 'confirmBooking'])->name('booking.confirm');
+    Route::post('/booking/confirm-store', [BookingController::class, 'confirmStore'])->name('booking.confirm-store');
     
     // APIs para obtener datos dinámicos (AJAX)
     Route::get('/api/professionals/{service}', [BookingController::class, 'getProfessionalsByService'])->name('api.professionals.by-service');
     Route::get('/api/available-dates', [BookingController::class, 'getAvailableDates'])->name('api.available-dates');
     Route::get('/api/available-slots', [BookingController::class, 'getAvailableSlots'])->name('api.available-slots');
+    
+    // Eliminación de reservas
+    Route::delete('/bookings/{id}', [BookingController::class, 'destroy'])->name('bookings.destroy');
 });
 
-// Rutas de reservas sin autenticación (mantenidas para compatibilidad)
+// Rutas de reservas sin autenticación
 Route::get('/booking/success', function () {
     return Inertia::render('BookingSuccess', []);
 })->name('booking.success');
-Route::get('/bookings', [BookingController::class, 'index'])->name('bookings.index');
-Route::delete('/bookings/{id}', [BookingController::class, 'destroy']);
 
 // API Routes
 Route::prefix('api')->group(function () {
-    // BIN Lookup para información de tarjetas
     Route::get('/binlist/{bin}', [BinLookController::class, 'getBankInfo']);
-    
-    // MercadoPago API routes
     Route::post('/mercadopago/create-preference', [MercadoPagoController::class, 'createPreference']);
     Route::post('/mercadopago/webhook', [MercadoPagoController::class, 'webhook'])->name('payment.webhook');
 });
@@ -92,17 +91,18 @@ Route::prefix('tools')->group(function () {
     })->name('tools.careers');
 });
 
-// API Routes para booking (mantenidas para compatibilidad)
+// API Routes para booking
 Route::prefix('api/booking')->group(function () {
-    // Obtener profesionales por servicio
     Route::get('professionals/{serviceId}', [BookingController::class, 'getProfessionalsByService']);
-    
-    // Obtener horarios disponibles
     Route::post('available-slots', [BookingController::class, 'getAvailableSlots']);
-    
-    // Obtener fechas disponibles por semana
     Route::post('available-dates', [BookingController::class, 'getAvailableDates']);
-    
-    // Crear reserva
     Route::post('create', [BookingController::class, 'store']);
+    Route::post('confirm-store', [BookingController::class, 'confirmStore']);
 });
+
+Route::get('/booking/bookingconfirmation/{id}', function ($id) {
+    $booking = \App\Models\Booking::with('service', 'professional')->findOrFail($id);
+    return Inertia::render('Booking/BookingConfirmation', [
+        'booking' => $booking
+    ]);
+})->name('booking.bookingconfirmation');

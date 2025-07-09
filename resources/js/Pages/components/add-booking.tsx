@@ -4,6 +4,7 @@ import { router, usePage } from "@inertiajs/react";
 import { Customer } from "@/Interfaces/Customer";
 import { getInitials } from "@/Pages/utils/helpers";
 import moment from "moment";
+import "moment/locale/es"; // Importar localización en español
 import { PaymentSystem, PaymentDetails } from "../components/PaymentSystem";
 
 interface Service {
@@ -70,6 +71,9 @@ const TIME_PERIODS = {
   afternoon: { label: "TARDE", times: ["12:00", "13:00", "14:00", "15:00", "16:00", "17:00"] },
   evening: { label: "NOCHE", times: ["18:00", "19:00", "20:00", "21:00", "22:00"] },
 };
+
+// Configurar moment para español
+moment.locale("es");
 
 export default function AddBooking({ service }: ComponentProps) {
   const { customer, professionals } = usePage<Props>().props;
@@ -249,11 +253,26 @@ export default function AddBooking({ service }: ComponentProps) {
   const selectedDay = weekData?.week_days.find(day => day.date === selectedDate);
 
   if (showPayment) {
+    if (!selectedDate || !selectedTime || !professionalId) {
+      return (
+        <div className="w-full max-w-[30rem] text-red-500">
+          Faltan datos de la reserva (fecha u horario)
+        </div>
+      );
+    }
+
+    const scheduledAt = new Date(`${selectedDate} ${selectedTime}`);
     return (
       <div className="w-full max-w-[30rem]">
-   
         <PaymentSystem
           amount={Number(service.price)}
+          serviceId={service.id}
+          serviceName={service.name}
+          bookingId={0} // Opcional, si no lo necesitas
+          customerEmail={customer.email}
+          customerName={customer.last_name}
+          scheduledAt={moment(scheduledAt).format('YYYY-MM-DD HH:mm:ss')}
+          professionalId={professionalId}
           onPaymentComplete={handlePaymentComplete}
           onCancel={() => setShowPayment(false)}
         />
@@ -342,11 +361,27 @@ export default function AddBooking({ service }: ComponentProps) {
                   <ChevronLeft className="w-5 h-5" />
                 </button>
                 
-                <div className="text-center">
-                  <h3 className="font-medium text-gray-900">{weekData.week_title}</h3>
-                  <p className="text-sm text-gray-500">
-                    {weekOffset === 0 ? 'Esta semana' : `${weekOffset + 1} semana${weekOffset > 0 ? 's' : ''} adelante`}
-                  </p>
+                <div className="grid grid-cols-7 gap-2">
+                  {weekData.week_days.map((day) => (
+                    <button
+                      key={day.date}
+                      onClick={() => day.is_available && handleDateSelection(day.date)}
+                      disabled={!day.is_available}
+                      className={`p-3 rounded-lg text-center transition-colors ${
+                        !day.is_available
+                          ? 'bg-gray-50 text-gray-400 cursor-not-allowed'
+                          : selectedDate === day.date
+                          ? 'bg-blue-500 text-white'
+                          : day.is_today
+                          ? 'bg-blue-100 text-blue-600 hover:bg-blue-200'
+                          : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
+                      }`}
+                    >
+                      <div className="text-xs font-medium mb-1">{day.day_name_es.slice(0, 3)}</div>
+                      <div className="text-lg font-bold">{day.day_number}</div>
+                      <div className="text-sm font-medium">{moment(day.date).format('MMM')}</div>
+                    </button>
+                  ))}
                 </div>
                 
                 <button
@@ -360,34 +395,6 @@ export default function AddBooking({ service }: ComponentProps) {
                 >
                   <ChevronRight className="w-5 h-5" />
                 </button>
-              </div>
-
-              {/* Días de la semana */}
-              <div className="grid grid-cols-7 gap-2">
-                {weekData.week_days.map((day) => (
-                  <button
-                    key={day.date}
-                    onClick={() => day.is_available && handleDateSelection(day.date)}
-                    disabled={!day.is_available}
-                    className={`p-3 rounded-lg text-center transition-colors ${
-                      !day.is_available
-                        ? 'bg-gray-50 text-gray-400 cursor-not-allowed'
-                        : selectedDate === day.date
-                        ? 'bg-blue-500 text-white'
-                        : day.is_today
-                        ? 'bg-blue-100 text-blue-600 hover:bg-blue-200'
-                        : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
-                    }`}
-                  >
-                    <div className="text-xs font-medium mb-1">{day.day_name_es.slice(0, 3)}</div>
-                    <div className="text-lg font-bold">{day.day_number}</div>
-                    {day.is_available && (
-                      <div className="text-xs text-gray-500 mt-1">
-                        {day.slots_available} slots
-                      </div>
-                    )}
-                  </button>
-                ))}
               </div>
             </div>
           ) : null}
@@ -456,7 +463,7 @@ export default function AddBooking({ service }: ComponentProps) {
           onClick={() => setShowPayment(true)}
           className="w-full bg-blue-500 text-white py-3 px-6 rounded-lg font-medium hover:bg-blue-600 transition-colors"
         >
-          Continuar al pago ({service.price} €)
+          Continuar al pago ({service.price} $)
         </button>
       )}
     </div>

@@ -63,23 +63,20 @@ class BookingController extends Controller
             $professionalId = $request->professional_id;
             $date = $request->date;
             
-            // Verificar que la fecha no sea pasada
             $requestDate = Carbon::parse($date);
             if ($requestDate->isPast() && !$requestDate->isToday()) {
                 return response()->json(['error' => 'No se pueden reservar fechas pasadas'], 400);
             }
             
-            // Obtener citas ya reservadas para ese profesional en esa fecha
             $bookedTimes = Booking::whereDate('scheduled_at', $date)
                 ->where('professional_id', $professionalId)
-                ->whereNotIn('status', ['cancelled']) // Excluir canceladas
+                ->whereNotIn('status', ['cancelled'])
                 ->pluck('scheduled_at')
                 ->map(function ($item) {
                     return Carbon::parse($item)->format('H:i');
                 })
                 ->toArray();
             
-            // Horarios base agrupados por períodos
             $timeSlots = [
                 'morning' => ['07:00', '08:00', '09:00', '10:00', '11:00'],
                 'afternoon' => ['12:00', '13:00', '14:00', '15:00', '16:00', '17:00'],
@@ -91,7 +88,6 @@ class BookingController extends Controller
                 $availableSlots[$period] = [];
                 
                 foreach ($slots as $slot) {
-                    // Si es hoy, verificar que no haya pasado la hora
                     if ($requestDate->isToday()) {
                         $slotTime = Carbon::parse($date . ' ' . $slot);
                         if ($slotTime->isPast()) {
@@ -99,7 +95,6 @@ class BookingController extends Controller
                         }
                     }
                     
-                    // Verificar que no esté ocupado
                     if (!in_array($slot, $bookedTimes)) {
                         $availableSlots[$period][] = $slot;
                     }
@@ -114,118 +109,193 @@ class BookingController extends Controller
     }
 
     public function store(Request $request)
-{
-    if (!Auth::guard('customer')->check()) {
-        return response()->json(['error' => 'No autorizado'], 401);
-    }
-    
-    $request->validate([
-        'service_id' => 'required|exists:services,id',
-        'professional_id' => 'required|exists:users,id',
-        'scheduled_at' => 'required|date|after:now',
-        'payment_method' => 'required|in:cash,card,transfer',
-        'payment_amount' => 'required|numeric|min:0',
-    ]);
-    
-    // Verificar que el horario esté disponible
-    $existingBooking = Booking::where('professional_id', $request->professional_id)
-        ->where('scheduled_at', $request->scheduled_at)
-        ->whereNotIn('status', ['cancelled'])
-        ->first();
-    
-    if ($existingBooking) {
-        return response()->json(['error' => 'El horario ya está ocupado'], 400);
-    }
-    
-    try {
-        // Determinar el estado inicial basado en el método de pago
-        $initialStatus = $request->payment_method === 'cash' ? 'confirmed' : 'pending';
-        $paymentStatus = $request->payment_method === 'cash' ? 'completed' : 'pending';
-        
-        // Crear la reserva
-        $booking = Booking::create([
-            'customer_id' => Auth::guard('customer')->id(),
-            'service_id' => $request->service_id,
-            'professional_id' => $request->professional_id,
-            'scheduled_at' => $request->scheduled_at,
-            'status' => $initialStatus,
-            'total_amount' => $request->payment_amount,
-            'payment_method' => $request->payment_method,
-            'payment_status' => $paymentStatus,
-            'payment_id' => $request->payment_method === 'cash' ? 'cash_' . uniqid() : null,
-            'confirmed_at' => $request->payment_method === 'cash' ? now() : null,
+    {
+        if (!Auth::guard('customer')->check()) {
+            return response()->json(['error' => 'No autorizado'], 401);
+        }
+
+        $request->validate([
+            'service_id' => 'required|exists:services,id',
+            'professional_id' => 'required|exists:users,id',
+            'scheduled_at' => 'required|date|after:now',
+            'payment_method' => 'required|string|in:efectivo,mercado_pago,transfer',
+            'temp_id' => 'required|string',
         ]);
-        
-        // Cargar las relaciones para la respuesta
-        $booking->load('service', 'professional', 'customer');
-        
-        Log::info('Reserva creada exitosamente', [
-            'booking_id' => $booking->id,
-            'customer_id' => $booking->customer_id,
-            'status' => $booking->status,
-            'payment_method' => $booking->payment_method,
-            'payment_status' => $booking->payment_status
-        ]);
-        
-        return response()->json([
-            'success' => true,
-            'message' => 'Reserva creada exitosamente',
-            'booking' => $booking,
-            'redirect_url' => route('booking.confirmation', ['booking' => $booking->id])
-        ], 201);
-        
-    } catch (\Exception $e) {
-        Log::error('Error creating booking: ' . $e->getMessage());
-        return response()->json(['error' => 'Error al crear la reserva'], 500);
+
+        if ($request->payment_method !== 'efectivo') {
+            $request->validate([
+                'payment_transaction_id' => 'required|string',
+                'payment_amount' => 'required|numeric',
+            ]);
+        }
+
+        $existingBooking = Booking::where('professional_id', $request->professional_id)
+            ->where('scheduled_at', $request->scheduled_at)
+            ->whereNotIn('status', ['cancelled'])
+            ->first();
+
+        if ($existingBooking) {
+            return response()->json(['error' => 'El horario ya está ocupado'], 400);
+        }
+
+        try {
+            $service = Service::findOrFail($request->service_id);
+            $professional = User::findOrFail($request->professional_id);
+            $customer = Auth::guard('customer')->user();
+
+            $bookingData = [
+                'id' => $request->temp_id,
+                'customer_id' => $customer->id,
+                'service_id' => $request->service_id,
+                'professional_id' => $request->professional_id,
+                'scheduled_at' => $request->scheduled_at,
+                'payment_method' => $request->payment_method,
+                'total_amount' => $request->payment_method === 'efectivo' ? $service->price : $request->payment_amount,
+                'payment_id' => $request->payment_method === 'efectivo' ? ($request->payment_transaction_id ?? 'cash_' . now()->timestamp) : $request->payment_transaction_id,
+                'payment_status' => $request->payment_method === 'efectivo' ? 'paid' : ($request->payment_status ?? 'pending'),
+                'service' => [
+                    'name' => $service->name,
+                    'price' => $service->price,
+                ],
+                'professional' => [
+                    'name' => $professional->name,
+                ],
+                'is_confirmed' => false,
+                'temp_id' => $request->temp_id,
+            ];
+
+            session(['booking_data_' . $request->temp_id => $bookingData]);
+
+            return response()->json([
+                'success' => true,
+                'redirect_url' => route('booking.confirmation', ['booking' => $request->temp_id]),
+                'booking_data' => $bookingData,
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error validando reserva: ' . $e->getMessage());
+            return response()->json(['error' => 'Error al validar la reserva: ' . $e->getMessage()], 500);
+        }
     }
-}
+
+    public function confirmStore(Request $request)
+    {
+        if (!Auth::guard('customer')->check()) {
+            return response()->json(['error' => 'No autorizado'], 401);
+        }
+
+        $request->validate([
+            'service_id' => 'required|exists:services,id',
+            'professional_id' => 'required|exists:users,id',
+            'scheduled_at' => 'required|date|after:now',
+            'payment_method' => 'required|string|in:efectivo,mercado_pago,transfer',
+            'temp_id' => 'required|string',
+        ]);
+
+        if ($request->payment_method !== 'efectivo') {
+            $request->validate([
+                'payment_transaction_id' => 'required|string',
+                'payment_amount' => 'required|numeric',
+                'payment_status' => 'required|string|in:pending,paid,failed',
+            ]);
+        }
+
+        $existingBooking = Booking::where('professional_id', $request->professional_id)
+            ->where('scheduled_at', $request->scheduled_at)
+            ->whereNotIn('status', ['cancelled'])
+            ->first();
+
+        if ($existingBooking) {
+            return response()->json(['error' => 'El horario ya está ocupado'], 400);
+        }
+
+        try {
+            $service = Service::findOrFail($request->service_id);
+            $professional = User::findOrFail($request->professional_id);
+            $customer = Auth::guard('customer')->user();
+
+            $booking = Booking::create([
+                'customer_id' => $customer->id,
+                'service_id' => $request->service_id,
+                'professional_id' => $request->professional_id,
+                'scheduled_at' => $request->scheduled_at,
+                'status' => 'pending',
+                'total_amount' => $request->payment_method === 'efectivo' ? $service->price : $request->payment_amount,
+                'payment_method' => $request->payment_method,
+                'payment_status' => $request->payment_method === 'efectivo' ? 'paid' : $request->payment_status,
+                'payment_id' => $request->payment_method === 'efectivo' ? ($request->payment_transaction_id ?? 'cash_' . now()->timestamp) : $request->payment_transaction_id,
+                'payment_completed_at' => $request->payment_method === 'efectivo' ? now() : ($request->payment_status === 'paid' ? now() : null),
+            ]);
+
+            session()->forget('booking_data_' . $request->temp_id);
+
+            return response()->json([
+                'success' => true,
+                'redirect_url' => route('booking.confirmation', ['booking' => $booking->id]),
+                'booking' => [
+                    'id' => $booking->id,
+                    'scheduled_at' => $booking->scheduled_at,
+                    'service' => [
+                        'name' => $service->name,
+                        'price' => $service->price,
+                    ],
+                    'professional' => [
+                        'name' => $professional->name,
+                    ],
+                    'payment_method' => $booking->payment_method,
+                    'payment_status' => $booking->payment_status,
+                    'total_amount' => $booking->total_amount,
+                    'is_confirmed' => true,
+                ],
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error creando reserva: ' . $e->getMessage());
+            return response()->json(['error' => 'Error al crear la reserva: ' . $e->getMessage()], 500);
+        }
+    }
 
     public function confirmation($bookingId)
     {
         try {
-            $booking = Booking::with(['service', 'professional', 'customer'])
-                ->where('id', $bookingId)
-                ->where('customer_id', Auth::guard('customer')->id())
-                ->firstOrFail();
-            
-            Log::info('Mostrando confirmación de reserva', [
-                'booking_id' => $booking->id,
-                'status' => $booking->status,
-                'payment_status' => $booking->payment_status
-            ]);
-            
-            return Inertia::render('Booking/Confirmation', [
-                'booking' => [
+            $bookingData = session('booking_data_' . $bookingId);
+
+            if (!$bookingData) {
+                $booking = Booking::with(['service', 'professional', 'customer'])
+                    ->where('id', $bookingId)
+                    ->where('customer_id', Auth::guard('customer')->id())
+                    ->firstOrFail();
+
+                $bookingData = [
                     'id' => $booking->id,
+                    'scheduled_at' => $booking->scheduled_at,
                     'service' => [
-                        'id' => $booking->service->id,
                         'name' => $booking->service->name,
-                        'description' => $booking->service->description,
                         'price' => $booking->service->price,
-                        'duration' => $booking->service->duration,
                     ],
                     'professional' => [
                         'name' => $booking->professional->name,
-                        'email' => $booking->professional->email,
-                        'photo' => $booking->professional->photo,
                     ],
-                    'customer' => [
-                        'name' => $booking->customer->name,
-                        'email' => $booking->customer->email,
-                    ],
-                    'scheduled_at' => $booking->scheduled_at,
-                    'scheduled_date' => Carbon::parse($booking->scheduled_at)->format('d/m/Y'),
-                    'scheduled_time' => Carbon::parse($booking->scheduled_at)->format('H:i'),
-                    'scheduled_day' => Carbon::parse($booking->scheduled_at)->format('l'),
-                    'total_amount' => $booking->total_amount,
                     'payment_method' => $booking->payment_method,
                     'payment_status' => $booking->payment_status,
-                    'status' => $booking->status,
-                    'created_at' => $booking->created_at,
-                    'confirmed_at' => $booking->confirmed_at,
-                ]
+                    'total_amount' => $booking->total_amount,
+                    'is_confirmed' => true,
+                ];
+            } else {
+                $bookingData['is_confirmed'] = false;
+                $bookingData['total_amount'] = $bookingData['total_amount'] ?? $bookingData['service']['price'];
+            }
+
+            Log::info('Mostrando confirmación de reserva', [
+                'booking_id' => $bookingId,
+                'is_confirmed' => $bookingData['is_confirmed'],
+                'payment_method' => $bookingData['payment_method'],
             ]);
-            
+
+            return Inertia::render('Booking/BookingConfirmation', [
+                'booking' => $bookingData,
+            ]);
+
         } catch (\Exception $e) {
             Log::error('Error mostrando confirmación: ' . $e->getMessage());
             return redirect()->route('booking.list')->with('error', 'Reserva no encontrada');
@@ -245,7 +315,6 @@ class BookingController extends Controller
                 'payment_method' => $booking->payment_method
             ]);
             
-            // Verificar que la reserva pueda ser confirmada
             if (!in_array($booking->status, ['pending', 'confirmed'])) {
                 return response()->json([
                     'success' => false,
@@ -253,7 +322,6 @@ class BookingController extends Controller
                 ], 400);
             }
             
-            // Confirmar la reserva
             $booking->update([
                 'status' => 'confirmed',
                 'confirmed_at' => now(),
@@ -268,8 +336,21 @@ class BookingController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Reserva confirmada exitosamente',
-                'booking' => $booking,
-                'redirect_url' => route('booking.list')
+                'booking' => [
+                    'id' => $booking->id,
+                    'scheduled_at' => $booking->scheduled_at,
+                    'service' => [
+                        'name' => $booking->service->name,
+                        'price' => $booking->service->price,
+                    ],
+                    'professional' => [
+                        'name' => $booking->professional->name,
+                    ],
+                    'payment_method' => $booking->payment_method,
+                    'payment_status' => $booking->payment_status,
+                    'total_amount' => $booking->total_amount,
+                    'is_confirmed' => true,
+                ],
             ]);
             
         } catch (\Exception $e) {
@@ -315,23 +396,145 @@ class BookingController extends Controller
         ]);
     }
 
-    // Método actualizado para obtener fechas disponibles por semana
+     public function destroy($id)
+    {
+        try {
+            $booking = Booking::where('id', $id)
+                ->where('customer_id', Auth::guard('customer')->id())
+                ->firstOrFail();
+
+            $scheduledAt = Carbon::parse($booking->scheduled_at);
+            $now = Carbon::now();
+            $oneHourBefore = $scheduledAt->copy()->subHour();
+
+            if ($now->greaterThanOrEqualTo($oneHourBefore)) {
+                Log::warning('Attempt to cancel booking too late', [
+                    'booking_id' => $booking->id,
+                    'scheduled_at' => $booking->scheduled_at,
+                    'now' => $now,
+                ]);
+                return response()->json([
+                    'success' => false,
+                    'error' => 'No se puede cancelar la reserva menos de 1 hora antes del servicio',
+                ], 403);
+            }
+
+            Log::info('Attempting to cancel booking', [
+                'booking_id' => $booking->id,
+                'status' => $booking->status,
+                'customer_id' => Auth::guard('customer')->id(),
+            ]);
+
+            $booking->update([
+                'status' => 'cancelled',
+                'cancelled_at' => now(),
+            ]);
+
+            Log::info('Booking cancelled', ['booking_id' => $booking->id]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Reserva cancelada exitosamente',
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error cancelling booking: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'error' => 'Error al cancelar la reserva: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function update(Request $request, $id)
+    {
+        try {
+            $booking = Booking::where('id', $id)
+                ->where('customer_id', Auth::guard('customer')->id())
+                ->firstOrFail();
+
+            $scheduledAt = Carbon::parse($booking->scheduled_at);
+            $now = Carbon::now();
+            $oneHourBefore = $scheduledAt->copy()->subHour();
+
+            if ($now->greaterThanOrEqualTo($oneHourBefore)) {
+                Log::warning('Attempt to edit booking too late', [
+                    'booking_id' => $booking->id,
+                    'scheduled_at' => $booking->scheduled_at,
+                    'now' => $now,
+                ]);
+                return response()->json([
+                    'success' => false,
+                    'error' => 'No se puede editar la reserva menos de 1 hora antes del servicio',
+                ], 403);
+            }
+
+            $request->validate([
+                'service_id' => 'required|exists:services,id',
+                'professional_id' => 'required|exists:users,id',
+                'scheduled_at' => 'required|date|after:now',
+            ]);
+
+            $existingBooking = Booking::where('professional_id', $request->professional_id)
+                ->where('scheduled_at', $request->scheduled_at)
+                ->whereNotIn('status', ['cancelled'])
+                ->where('id', '!=', $id)
+                ->first();
+
+            if ($existingBooking) {
+                return response()->json(['error' => 'El horario ya está ocupado'], 400);
+            }
+
+            $booking->update([
+                'service_id' => $request->service_id,
+                'professional_id' => $request->professional_id,
+                'scheduled_at' => $request->scheduled_at,
+                'status' => 'pending',
+            ]);
+
+            Log::info('Booking updated', ['booking_id' => $booking->id]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Reserva actualizada exitosamente',
+                'booking' => [
+                    'id' => $booking->id,
+                    'service' => [
+                        'name' => $booking->service->name,
+                        'duration' => $booking->service->duration,
+                        'image' => $booking->service->image ? Storage::url($booking->service->image) : null,
+                    ],
+                    'professional' => [
+                        'name' => $booking->professional->name,
+                        'photo' => $booking->professional->photo ? Storage::url($booking->professional->photo) : null,
+                    ],
+                    'scheduled_at' => $booking->scheduled_at,
+                    'status' => $booking->status,
+                ],
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error updating booking: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'error' => 'Error al actualizar la reserva: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+
     public function getAvailableDates(Request $request)
     {
         try {
             $request->validate([
                 'professional_id' => 'required|exists:users,id',
-                'week_offset' => 'integer|min:0|max:12', // Permitir hasta 12 semanas adelante
+                'week_offset' => 'integer|min:0|max:12',
             ]);
             
             $professionalId = $request->professional_id;
             $weekOffset = $request->week_offset ?? 0;
             
-            // Calcular la fecha de inicio de la semana
             $startOfWeek = Carbon::now()->startOfWeek()->addWeeks($weekOffset);
             $endOfWeek = $startOfWeek->copy()->endOfWeek();
             
-            // Obtener días con reservas de toda la semana
             $bookedDays = Booking::where('professional_id', $professionalId)
                 ->whereBetween('scheduled_at', [$startOfWeek, $endOfWeek])
                 ->whereNotIn('status', ['cancelled'])
@@ -343,12 +546,9 @@ class BookingController extends Controller
                     return $dayBookings->count();
                 });
             
-            // Generar días de la semana
             $weekDays = [];
             $currentDate = $startOfWeek->copy();
-            $maxSlotsPerDay = 15; // Máximo de slots por día
-            
-            // Obtener el día actual para comparaciones
+            $maxSlotsPerDay = 15;
             $today = Carbon::now()->format('Y-m-d');
             
             for ($i = 0; $i < 7; $i++) {
@@ -359,8 +559,8 @@ class BookingController extends Controller
                 
                 $weekDays[] = [
                     'date' => $dateKey,
-                    'day_name' => $currentDate->format('l'), // Nombre del día en inglés
-                    'day_name_es' => $this->getDayNameInSpanish($currentDate->format('l')), // Nombre en español
+                    'day_name' => $currentDate->format('l'),
+                    'day_name_es' => $this->getDayNameInSpanish($currentDate->format('l')),
                     'day_number' => $currentDate->day,
                     'month' => $currentDate->month,
                     'year' => $currentDate->year,
@@ -391,7 +591,6 @@ class BookingController extends Controller
         }
     }
 
-    // Método auxiliar para obtener nombres de días en español
     private function getDayNameInSpanish($dayName)
     {
         $days = [
@@ -407,7 +606,6 @@ class BookingController extends Controller
         return $days[$dayName] ?? $dayName;
     }
 
-    // Método auxiliar para obtener el título de la semana
     private function getWeekTitle($startOfWeek, $endOfWeek)
     {
         $startMonth = $startOfWeek->format('M');

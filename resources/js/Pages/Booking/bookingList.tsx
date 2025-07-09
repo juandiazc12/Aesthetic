@@ -10,6 +10,7 @@ import { Inertia } from '@inertiajs/inertia';
 type Props = {
   bookings: Booking[];
 };
+
 export default function BookingList() {
   const { bookings, customer, professionals } = usePage<Props>().props;
   const [editBannerVisible, setEditBannerVisible] = useState(false);
@@ -24,17 +25,23 @@ export default function BookingList() {
     "bg-purple-200",
   ];
 
-  const random = Math.floor(Math.random() * colors.length);
+  // Verifica si faltan más de 1 hora para la reserva
+  const isEditable = (scheduledAt: string) => {
+    const scheduledDate = new Date(scheduledAt);
+    const now = new Date();
+    const oneHourBefore = new Date(scheduledDate.getTime() - 60 * 60 * 1000); // 1 hora antes
+    return now < oneHourBefore;
+  };
 
-  const removeBoooking = (bookingId: number) => {
-    if (confirm('¿Estás seguro de que deseas eliminar esta reserva?')) {
+  const cancelBooking = (bookingId: number) => {
+    if (confirm('¿Estás seguro de que deseas cancelar esta reserva?')) {
       Inertia.delete(`/bookings/${bookingId}`, {
         onSuccess: () => {
-          alert('Reserva eliminada exitosamente');
+          alert('Reserva cancelada exitosamente');
         },
         onError: () => {
-          alert('Ocurrió un error al eliminar la reserva');
-        }
+          alert('Ocurrió un error al intentar cancelar la reserva');
+        },
       });
     }
   };
@@ -50,7 +57,6 @@ export default function BookingList() {
   };
 
   const handleSaveBooking = (updatedBooking: Booking) => {
-    // Aquí implementar la lógica para guardar los cambios
     console.log("Guardando cambios:", updatedBooking);
     setEditBannerVisible(false);
     setSelectedBooking(null);
@@ -111,10 +117,7 @@ export default function BookingList() {
               <table className="min-w-full divide-y divide-gray-200 dark:divide-neutral-700">
                 <thead className="bg-gray-50 dark:bg-neutral-800">
                   <tr>
-                    <th
-                      scope="col"
-                      className="ps-6 lg:ps-3 xl:ps-0 pe-6 py-3 text-start"
-                    >
+                    <th scope="col" className="ps-6 lg:ps-3 xl:ps-0 pe-6 py-3 text-start">
                       <div className="flex items-center gap-x-2">
                         <span className="text-xs font-semibold uppercase tracking-wide text-gray-800 dark:text-neutral-200">
                           Profesional
@@ -151,94 +154,104 @@ export default function BookingList() {
                 </thead>
 
                 <tbody className="divide-y divide-gray-200 dark:divide-neutral-700">
-                  {bookings.map((booking, index) => (
-                    <tr key={index}>
-                      <td className="size-px whitespace-nowrap">
-                        <div className="ps-6 lg:ps-3 xl:ps-0 pe-6 py-3">
-                          <div className="flex items-center gap-x-3">
-                            <div
-                              className={`w-10 h-10 rounded-full flex items-center justify-center  ${
-                                colors[
-                                  Math.floor(Math.random() * colors.length)
-                                ]
-                              }`}
-                            >
-                              {booking.professional.photo ? (
-                                <img
-                                  src={booking.professional.photo}
-                                  alt={booking.professional.name}
-                                />
-                              ) : (
-                                <span>
-                                  {getInitials(booking.professional.name)}
+                  {bookings.map((booking, index) => {
+                    console.log('Booking:', {
+                      professionalPhoto: booking.professional.photo,
+                      serviceImage: booking.service.image,
+                    });
+                    const canEditOrCancel = isEditable(booking.scheduled_at);
+                    return (
+                      <tr key={index}>
+                        <td className="size-px whitespace-nowrap">
+                          <div className="ps-6 lg:ps-3 xl:ps-0 pe-6 py-3">
+                            <div className="flex items-center gap-x-3">
+                              <div
+                                className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                                  colors[Math.floor(Math.random() * colors.length)]
+                                }`}
+                              >
+                                {booking.professional.photo ? (
+                                  <img
+                                    src={booking.professional.photo}
+                                    alt={booking.professional.name}
+                                    className="w-10 h-10 rounded-full object-cover"
+                                  />
+                                ) : (
+                                  <span>{getInitials(booking.professional.name)}</span>
+                                )}
+                              </div>
+                              <div className="grow">
+                                <span className="block text-sm font-semibold text-gray-800 dark:text-neutral-200">
+                                  {booking.professional.name}
                                 </span>
-                              )}
-                            </div>
-                            <div className="grow">
-                              <span className="block text-sm font-semibold text-gray-800 dark:text-neutral-200">
-                                {booking.professional.name}
-                              </span>
-                              <span className="block text-sm text-gray-500 dark:text-neutral-500">
-                                {booking.professional.email}
-                              </span>
+                                <span className="block text-sm text-gray-500 dark:text-neutral-500">
+                                  {booking.professional.email}
+                                </span>
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      </td>
+                        </td>
 
-                      <td className="h-px w-72 whitespace-nowrap">
-                        <div className="ps-6 lg:ps-3 xl:ps-0 pe-6 py-3">
-                          <div className="flex items-center gap-x-3">
-                            <div className="w-16 h-16 rounded-md flex items-center justify-center bg-blue-200">
-                              <img src={booking.service.image} alt="" />
-                            </div>
-                            <div className="grow">
-                              <span className="block text-sm font-semibold text-gray-800 dark:text-neutral-200">
-                                {booking.service.name}
-                              </span>
+                        <td className="h-px w-72 whitespace-nowrap">
+                          <div className="ps-6 lg:ps-3 xl:ps-0 pe-6 py-3">
+                            <div className="flex items-center gap-x-3">
+                              <div className="w-16 h-16 rounded-md flex items-center justify-center bg-blue-200">
+                                {booking.service.image ? (
+                                  <img
+                                    src={booking.service.image}
+                                    alt={booking.service.name}
+                                    className="w-16 h-16 rounded-md object-cover"
+                                  />
+                                ) : (
+                                  <span>{getInitials(booking.service.name)}</span>
+                                )}
+                              </div>
+                              <div className="grow">
+                                <span className="block text-sm font-semibold text-gray-800 dark:text-neutral-200">
+                                  {booking.service.name}
+                                </span>
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      </td>
+                        </td>
 
-                      <td className="size-px whitespace-nowrap">
-                        <div className="px-6 py-3">
-                          <span>{booking.scheduled_at}</span>
-                        </div>
-                      </td>
-                      <td className="size-px whitespace-nowrap">
-                        <div className="px-6 py-3">
-                          <span className="text-sm text-gray-500 dark:text-neutral-500">
-                            {booking.created_at}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="size-px whitespace-nowrap">
-                        <div className="px-6 py-1.5">
-                          <a
-                            className="inline-flex items-center gap-x-1 text-2xl text-blue-600 hover:text-blue-800 transition-all duration-300 transform hover:scale-110"
-                            href="#"
-                            onClick={() => handleEditClick(booking)}
-                          >
-                            {/* Ícono de editar (lapiz) de Font Awesome */}
-                            <i className="fas fa-pencil-alt text-blue-600 hover:text-blue-800 transition-all duration-100 transform hover:scale-110"></i>
-                          </a>
-                        </div>
-                      </td>
-                      <td className="size-px whitespace-nowrap">
-                        <div className="px-6 py-1.5">
-                          <Link
-                            className="inline-flex items-center gap-x-1 text-2xl text-red-600 hover:text-red-800 transition-all duration-100 transform hover:scale-110"
-                            href="#"
-                            onClick={() => removeBoooking(booking.id)}
-                          >
-                            {/* Ícono de eliminar (lapiz) de Font Awesome */}
-                            <i className="fas fa-trash-alt text-red-600 hover:text-red-1000 transition-all duration-50 transform hover:scale-200"></i>
-                          </Link>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
+                        <td className="size-px whitespace-nowrap">
+                          <div className="px-6 py-3">
+                            <span>{booking.scheduled_at}</span>
+                          </div>
+                        </td>
+                        <td className="size-px whitespace-nowrap">
+                          <div className="px-6 py-3">
+                            <span className="text-sm text-gray-500 dark:text-neutral-500">
+                              {booking.created_at}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="size-px whitespace-nowrap">
+                          <div className="px-6 py-1.5">
+                            <a
+                              className={`inline-flex items-center gap-x-1 text-2xl text-blue-600 hover:text-blue-800 transition-all duration-300 transform hover:scale-110 ${!canEditOrCancel ? 'opacity-50 pointer-events-none' : ''}`}
+                              href="#"
+                              onClick={() => canEditOrCancel && handleEditClick(booking)}
+                            >
+                              <i className="fas fa-pencil-alt text-blue-600 hover:text-blue-800 transition-all duration-100 transform hover:scale-110"></i>
+                            </a>
+                          </div>
+                        </td>
+                        <td className="size-px whitespace-nowrap">
+                          <div className="px-6 py-1.5">
+                            <Link
+                              className={`inline-flex items-center gap-x-1 text-2xl text-red-600 hover:text-red-800 transition-all duration-100 transform hover:scale-110 ${!canEditOrCancel ? 'opacity-50 pointer-events-none' : ''}`}
+                              href="#"
+                              onClick={() => canEditOrCancel && cancelBooking(booking.id)}
+                            >
+                              <i className="fas fa-trash-alt text-red-600 hover:text-red-800 transition-all duration-50 transform hover:scale-110"></i>
+                            </Link>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
               {/* End Table */}
