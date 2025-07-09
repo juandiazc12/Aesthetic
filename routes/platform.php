@@ -101,3 +101,9 @@ Route::screen('/examples/layouts', ExampleLayoutsScreen::class)->name('platform.
 Route::screen('/examples/grid', ExampleGridScreen::class)->name('platform.example.grid');
 Route::screen('/examples/charts', ExampleChartsScreen::class)->name('platform.example.charts');
 Route::screen('/examples/cards', ExampleCardsScreen::class)->name('platform.example.cards');
+
+// Ruta para los eventos del calendario
+Route::get('/calendar/events', [ExampleScreen::class, 'getCalendarEvents'])->name('platform.calendar.events');
+
+// Ruta para ver/editar una cita específica
+Route::screen('/bookings/{booking}/edit', \App\Orchid\Screens\BookingEditScreen::class)->name('platform.bookings.edit');

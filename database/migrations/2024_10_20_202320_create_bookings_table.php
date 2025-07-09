@@ -11,15 +11,25 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('bookings', function (Blueprint $table) {
-            // Agregar campos necesarios para MercadoPago
-            $table->decimal('total_amount', 10, 2)->nullable()->after('notes');
-            $table->string('payment_preference_id')->nullable()->after('total_amount');
-            $table->string('payment_id')->nullable()->after('payment_preference_id');
-            $table->enum('payment_status', ['pending', 'paid', 'failed', 'cancelled'])->default('pending')->after('payment_id');
-            $table->json('payment_details')->nullable()->after('payment_status');
-            $table->string('payment_method')->nullable()->after('payment_details');
-            $table->timestamp('payment_completed_at')->nullable()->after('payment_method');
+        Schema::create('bookings', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('customer_id')->constrained('customers')->onDelete('cascade');
+            $table->foreignId('service_id')->constrained('services')->onDelete('cascade');
+            $table->foreignId('professional_id')->constrained('users')->onDelete('cascade');
+            $table->dateTime('scheduled_at');
+            $table->enum('status', ['pending', 'active', 'completed', 'cancelled'])->default('pending');
+            $table->text('notes')->nullable();
+
+            // Campos de MercadoPago
+            $table->decimal('total_amount', 10, 2)->nullable();
+            $table->string('payment_preference_id')->nullable();
+            $table->string('payment_id')->nullable();
+            $table->enum('payment_status', ['pending', 'paid', 'failed', 'cancelled'])->default('pending');
+            $table->json('payment_details')->nullable();
+            $table->string('payment_method')->nullable();
+            $table->timestamp('payment_completed_at')->nullable();
+
+            $table->timestamps();
         });
     }
 
@@ -28,16 +38,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('bookings', function (Blueprint $table) {
-            $table->dropColumn([
-                'total_amount',
-                'payment_preference_id',
-                'payment_id',
-                'payment_status',
-                'payment_details',
-                'payment_method',
-                'payment_completed_at'
-            ]);
-        });
+        Schema::dropIfExists('bookings');
     }
 };
