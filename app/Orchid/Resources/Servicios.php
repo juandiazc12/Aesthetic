@@ -25,6 +25,11 @@ class Servicios extends Resource
     public function fields(): array
     {
         return [
+
+             Picture::make('image')
+                ->title('Imagen del servicio')
+                ->required(),
+                
             Input::make('name')
                 ->title('Nombre')
                 ->placeholder('Ingrese el nombre del servicio')
@@ -34,9 +39,7 @@ class Servicios extends Resource
                 ->title('Descripción')
                 ->placeholder('ingrese la descripción'),
 
-            Picture::make('image')
-                ->title('Imagen del servicio')
-                ->required(),
+           
 
             Input::make('price')
                 ->type('number')

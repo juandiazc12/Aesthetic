@@ -64,4 +64,8 @@ class Customer extends User
     {
         return $this->bookings()->where('payment_status', 'pending')->get();
     }
+    public function getContent(string $field)
+    {
+        return $this->getAttribute($field);
+    }
 }

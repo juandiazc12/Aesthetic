@@ -20,23 +20,15 @@ class UserEditLayout extends Rows
     {
         return [
             Picture::make('user.photo')
-            ->title(__('Foto de Perfil'))
-            ->targetRelativeUrl() // Guarda solo la URL relativa
-            ->help(__('Sube una imagen para el perfil')),
-           
-            
+                ->title(__('Foto de Perfil'))
+                ->targetRelativeUrl(),
+
             Input::make('user.name')
                 ->type('text')
                 ->max(255)
                 ->required()
-                ->title(__('Nombre'))
-                ->placeholder(__('Nombre')),    
-
-            Input::make('user.email')
-                ->type('email')
-                ->required()
-                ->title(__('Correo'))
-                ->placeholder(__('Correo')),
+                ->title(__('Nombres'))
+                ->placeholder('Nombres y apellido'),
         ];
     }
 }

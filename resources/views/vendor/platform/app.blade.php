@@ -58,7 +58,7 @@
         @yield('aside')
 
         <div class="col-xxl col-xl-9 col-12 mx-auto">
-            @yield('body')
+            @yield('body') 
         </div>
     </div>
 

@@ -6,10 +6,11 @@ namespace App\Orchid\Layouts\User;
 
 use App\Models\User;
 use Orchid\Screen\Field;
+use Orchid\Screen\Fields\Input;
 use Orchid\Screen\Fields\Password;
 use Orchid\Screen\Layouts\Rows;
 
-class UserPasswordLayout extends Rows
+class UserCredentialsLayout extends Rows
 {
     /**
      * The screen's layout elements.
@@ -20,18 +21,19 @@ class UserPasswordLayout extends Rows
     {
         /** @var User $user */
         $user = $this->query->get('user');
-
         $exists = $user->exists;
 
-        $placeholder = $exists
-            ? __('Dejar vacío para mantener la contraseña actual')
-            : __('Introduzca la contraseña que desea configurar');
-
         return [
+            Input::make('user.email')
+                ->type('email')
+                ->required()
+                ->title(__('Correo'))
+                ->placeholder(__('Correo')),
+
             Password::make('user.password')
-                ->placeholder($placeholder)
                 ->title(__('Contraseña'))
-                ->required(! $exists),
+                ->required(!$exists)
+                ->placeholder(__('Ingrese la contraseña')),
         ];
     }
 }

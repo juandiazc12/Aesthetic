@@ -75,9 +75,14 @@ class User extends Authenticatable
         'created_at',
     ];
 public function services()
-{
-    return $this->belongsToMany(Service::class, 'service_professional', 'professional_id', 'service_id');
-}
+    {
+        return $this->belongsToMany(Service::class, 'service_user', 'professional_id', 'service_id');
+    }
+
+    public function servicesList()
+    {
+        return $this->belongsToMany(ServiceList::class, 'service_list_user', 'professional_id', 'service_list_id');
+    }
 
 public function bookings()
 {
