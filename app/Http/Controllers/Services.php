@@ -5,6 +5,7 @@ use App\Models\Service;
 use App\Models\User;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Auth;
+use App\Models\ServiceList;
 
 use function Laravel\Prompts\error;
 
@@ -18,13 +19,13 @@ class Services extends Controller
             return [
                 'id' => $service->id,
                 'name' => $service->name,
-                'image' => $service->image,
+                'image' => $service->image ? \Storage::url($service->image) : null,
                 'description' => $service->description,
-                'price' => $service->price,
+                'price' => number_format($service->price, 0),
                 'duration' => $service->duration,
                 'status' => $service->status,
-                'created_at' => $service->created_at,
-                'updated_at' => $service->updated_at,
+                'created_at' => $service->created_at->format('Y-m-d H:i:s'),
+                'updated_at' => $service->updated_at->format('Y-m-d H:i:s'),
             ];
         });
 
@@ -42,23 +43,37 @@ class Services extends Controller
         }
 
         $service = Service::findOrFail($id);
-        $professionals = User::whereHas('roles', function ($query) {
-            $query->where('name', 'profesional'); // Filtrar por el rol 'profesional'
-        })->get();
+        $serviceList = ServiceList::where('name', $service->name)->first();
+        $professionals = collect();
 
+        if ($serviceList) {
+            $professionals = $serviceList->servicesList()
+                ->whereHas('roles', function ($query) {
+                    $query->where('name', 'profesional');
+                })
+                ->select('users.id', 'users.name', 'users.email', 'users.photo')
+                ->get();
+        }
 
         return Inertia::render('Services/Service', [
             'service' => [
                 'id' => $service->id,
                 'name' => $service->name,
-                'image' => $service->image,
+                'image' => $service->image ,
                 'description' => $service->description,
-                'price' => $service->price,
+                'price' => number_format($service->price, 0),
                 'status' => $service->status,
                 'created_at' => $service->created_at->format('Y-m-d H:i:s'),
                 'updated_at' => $service->updated_at->format('Y-m-d H:i:s'),
             ],
-            'professionals' => $professionals,
+            'professionals' => $professionals->map(function ($professional) {
+                return [
+                    'id' => $professional->id,
+                    'name' => $professional->name,
+                    'email' => $professional->email,
+                    'photo' => $professional->photo,
+                ];
+            }), 
         ]);
     }
 }

@@ -1,9 +1,8 @@
 <?php
-
 declare(strict_types=1);
 
 namespace App\Orchid;
-
+use App\Models\Booking; // Importar el modelo Booking
 use Orchid\Platform\Dashboard;
 use Orchid\Platform\ItemPermission;
 use Orchid\Platform\OrchidServiceProvider;
@@ -23,7 +22,7 @@ class PlatformProvider extends OrchidServiceProvider
             Menu::make('Dashboard')
                 ->icon('bs.collection')
                 ->route('platform.example')
-                ->badge(fn () => 6),
+                ->badge(fn () => Booking::whereDate('scheduled_at', today())->count()),
 
             Menu::make('Cards')
                 ->icon('bs.card-text')

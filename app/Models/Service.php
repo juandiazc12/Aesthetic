@@ -50,4 +50,13 @@ class Service extends Model
             ->select('users.id', 'users.name', 'users.email', 'users.photo')
             ->get();
     }
+     // Método para sincronizar profesionales basado en ServiceList
+    public function syncProfessionalsFromServiceList()
+    {
+        $serviceList = ServiceList::where('name', $this->name)->first();
+        if ($serviceList) {
+            $professionalIds = $serviceList->servicesList()->pluck('users.id')->toArray();
+            $this->professionals()->sync($professionalIds);
+        }
+    }
 }

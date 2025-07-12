@@ -2,6 +2,7 @@
 namespace App\Http\Controllers;
 use App\Models\Service;
 use App\Models\Booking;
+use App\Models\ServiceList;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -13,14 +14,7 @@ class BookingController extends Controller
 {
     public function show($serviceId = null)
     {
-        if ($serviceId) {
-            $service = Service::findOrFail($serviceId);
-            $professionals = $service->getActiveProfessionals();
-        } else {
-            $professionals = User::whereHas('roles', function ($query) {
-                $query->where('slug', 'profesional');
-            })->select('id', 'name', 'email', 'photo')->get();
-        }
+        
         $services = Service::where('status', 'active')
             ->get()
             ->map(function ($service) {
@@ -33,19 +27,52 @@ class BookingController extends Controller
                     'status' => $service->status,
                 ];
             });
+
+            $professionals = collect();
+        if ($serviceId) {
+            $service = Service::findOrFail($serviceId);
+            // Buscar ServiceList por el nombre del servicio
+            $serviceList = ServiceList::where('name', $service->name)->first();
+            if ($serviceList) {
+                // Obtener profesionales asociados a ServiceList desde service_list_user
+                $professionals = $serviceList->servicesList()
+                    ->whereHas('roles', function ($query) {
+                        $query->where('slug', 'profesional');
+                    })
+                    ->select('users.id', 'users.name', 'users.email', 'users.photo')
+                    ->get();
+            }
+        } else {
+            // Si no hay serviceId, obtener todos los profesionales con rol 'profesional'
+            $professionals = User::whereHas('roles', function ($query) {
+                $query->where('slug', 'profesional');
+            })->select('id', 'name', 'email', 'photo')->get();
+        }
+
         return Inertia::render('Booking/booking', [
             'initialServices' => $services,
             'professionals' => $professionals,
             'selectedService' => $serviceId ? $service : null,
         ]);
+        
     }
 
     public function getProfessionalsByService($serviceId)
     {
         try {
             $service = Service::findOrFail($serviceId);
-            $professionals = $service->getActiveProfessionals();
-            
+            $serviceList = ServiceList::where('name', $service->name)->first();
+            $professionals = collect();
+
+            if ($serviceList) {
+                $professionals = $serviceList->servicesList()
+                    ->whereHas('roles', function ($query) {
+                        $query->where('slug', 'profesional');
+                    })
+                    ->select('users.id', 'users.name', 'users.email', 'users.photo')
+                    ->get();
+            }
+
             return response()->json($professionals);
         } catch (\Exception $e) {
             Log::error('Error getting professionals by service: ' . $e->getMessage());
@@ -501,11 +528,11 @@ class BookingController extends Controller
                     'service' => [
                         'name' => $booking->service->name,
                         'duration' => $booking->service->duration,
-                        'image' => $booking->service->image ? Storage::url($booking->service->image) : null,
+                        'image' => $booking->service->image ? \Storage::url($booking->service->image) : null,
                     ],
                     'professional' => [
                         'name' => $booking->professional->name,
-                        'photo' => $booking->professional->photo ? Storage::url($booking->professional->photo) : null,
+                        'photo' => $booking->professional->photo ? \Storage::url($booking->professional->photo) : null,
                     ],
                     'scheduled_at' => $booking->scheduled_at,
                     'status' => $booking->status,

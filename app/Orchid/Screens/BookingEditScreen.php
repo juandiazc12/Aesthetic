@@ -1,116 +1,123 @@
 <?php
+declare(strict_types=1);
 
 namespace App\Orchid\Screens;
 
-use App\Models\Booking;
-use App\Models\Customer;
+use App\Models\Booking; // Importar el modelo correcto
 use App\Models\Service;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Orchid\Screen\Actions\Button;
 use Orchid\Screen\Fields\DateTimer;
-use Orchid\Screen\Fields\Relation;
-use Orchid\Screen\Fields\TextArea;
+use Orchid\Screen\Fields\Select;
 use Orchid\Screen\Screen;
 use Orchid\Support\Facades\Layout;
 use Orchid\Support\Facades\Toast;
 
 class BookingEditScreen extends Screen
 {
-    /**
-     * @var Booking
-     */
     public $booking;
 
-    /**
-     * Fetch data to be displayed on the screen.
-     *
-     * @return array
-     */
     public function query(Booking $booking): iterable
     {
+        $booking->load(['service', 'professional', 'customer']);
         return [
-            'booking' => $booking->load(['service', 'customer', 'professional']),
+            'booking' => $booking,
         ];
     }
 
-    /**
-     * The name of the screen displayed in the header.
-     *
-     * @return string|null
-     */
     public function name(): ?string
     {
-        return $this->booking->exists ? 'Detalles de la Cita' : 'Crear Nueva Cita';
+        return 'Editar Cita';
     }
 
-    /**
-     * The screen's action buttons.
-     *
-     * @return \Orchid\Screen\Action[]
-     */
+    public function permission(): ?iterable
+    {
+        return [
+            'platform.dashboard',
+        ];
+    }
+
     public function commandBar(): iterable
     {
         return [
-            Button::make('Guardar Cambios')
+            Button::make('Guardar')
                 ->icon('bs.check-circle')
-                ->method('save')
-                ->canSee($this->booking->exists),
-
-            Button::make('Eliminar')
+                ->method('save'),
+            Button::make('Cancelar Cita')
                 ->icon('bs.trash3')
-                ->method('remove')
-                ->canSee($this->booking->exists),
+                ->method('cancel')
+                ->canSee($this->booking->status !== 'cancelled'),
         ];
     }
 
-    /**
-     * The screen's layout elements.
-     *
-     * @return \Orchid\Screen\Layout[]|string[]
-     */
     public function layout(): iterable
     {
         return [
             Layout::rows([
-                Relation::make('booking.customer_id')
-                    ->title('Cliente')
-                    ->fromModel(Customer::class, 'name')
-                    ->disabled(),
-
-                Relation::make('booking.service_id')
+                Select::make('booking.service_id')
                     ->title('Servicio')
-                    ->fromModel(Service::class, 'name')
-                    ->disabled(),
-
-                Relation::make('booking.professional_id')
+                    ->options(Service::pluck('name', 'id')->toArray())
+                    ->required(),
+                Select::make('booking.professional_id')
                     ->title('Profesional')
-                    ->fromModel(User::class, 'name') // Asumiendo que los profesionales son usuarios
-                    ->disabled(),
-
+                    ->options(User::whereHas('roles', fn($q) => $q->where('slug', 'profesional'))->pluck('name', 'id')->toArray())
+                    ->required(),
                 DateTimer::make('booking.scheduled_at')
                     ->title('Fecha y Hora')
-                    ->enableTime()
                     ->format('Y-m-d H:i')
-                    ->disabled(),
-
-                TextArea::make('booking.notes')
-                    ->title('Notas')
-                    ->rows(5)
-                    ->disabled(),
-            ])
+                    ->required(),
+                Select::make('booking.status')
+                    ->title('Estado')
+                    ->options([
+                        'pending' => 'Pendiente',
+                        'confirmed' => 'Confirmada',
+                        'completed' => 'Completada',
+                        'cancelled' => 'Cancelada',
+                    ])
+                    ->required(),
+            ]),
         ];
     }
 
     public function save(Booking $booking, Request $request)
     {
-        // Lógica para guardar aquí (la implementaremos si es necesario)
-        Toast::info('Funcionalidad de guardado no implementada.');
+        $request->validate([
+            'booking.service_id' => 'required|exists:services,id',
+            'booking.professional_id' => 'required|exists:users,id',
+            'booking.scheduled_at' => 'required|date|after:now',
+            'booking.status' => 'required|in:pending,confirmed,completed,cancelled',
+        ]);
+
+        $existingBooking = Booking::where('professional_id', $request->input('booking.professional_id'))
+            ->where('scheduled_at', $request->input('booking.scheduled_at'))
+            ->whereNotIn('status', ['cancelled'])
+            ->where('id', '!=', $booking->id)
+            ->first();
+
+        if ($existingBooking) {
+            Toast::error('El horario ya está ocupado.');
+            return redirect()->back();
+        }
+
+        $booking->update($request->input('booking'));
+        Toast::info('Cita actualizada.');
+        return redirect()->route('platform.example');
     }
 
-    public function remove(Booking $booking)
+    public function cancel(Booking $booking)
     {
-        // Lógica para eliminar aquí (la implementaremos si es necesario)
-        Toast::info('Funcionalidad de eliminación no implementada.');
+        if (Carbon::now()->gte($booking->scheduled_at->subHour())) {
+            Toast::error('No se puede cancelar menos de 1 hora antes.');
+            return redirect()->back();
+        }
+
+        $booking->update([
+            'status' => 'cancelled',
+            'cancelled_at' => now(),
+        ]);
+
+        Toast::info('Cita cancelada.');
+        return redirect()->route('platform.example');
     }
 }

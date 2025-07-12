@@ -294,43 +294,49 @@ export default function AddBooking({ service }: ComponentProps) {
           <User className="w-5 h-5" />
           Selecciona un profesional
         </h2>
-        <div className="grid gap-3">
-          {professionals.map((professional) => (
-            <button
-              key={professional.id}
-              className={`flex items-center gap-3 p-3 rounded-lg border transition-colors ${
-                professionalId === professional.id
-                  ? "bg-blue-500 text-white border-blue-500"
-                  : "bg-white hover:bg-gray-50 border-gray-200"
-              }`}
-              onClick={() => handleProfessionalSelection(professional.id)}
-            >
-              <div
-                className={`w-10 h-10 rounded-full flex items-center justify-center ${
+        {professionals.length === 0 ? (
+          <div className="text-center text-gray-500">
+            No hay profesionales disponibles para este servicio
+          </div>
+        ) : (
+          <div className="grid gap-3">
+            {professionals.map((professional) => (
+              <button
+                key={professional.id}
+                className={`flex items-center gap-3 p-3 rounded-lg border transition-colors ${
                   professionalId === professional.id
-                    ? "bg-blue-700 text-white"
-                    : "bg-gray-100"
+                    ? "bg-blue-500 text-white border-blue-500"
+                    : "bg-white hover:bg-gray-50 border-gray-200"
                 }`}
+                onClick={() => handleProfessionalSelection(professional.id)}
               >
-                {professional.photo ? (
-                  <img
-                    src={professional.photo}
-                    alt={professional.name}
-                    className="w-10 h-10 rounded-full object-cover"
-                  />
-                ) : (
-                  <span className="text-sm font-medium">
-                    {getInitials(professional.name)}
-                  </span>
-                )}
-              </div>
-              <div className="text-left">
-                <div className="font-medium">{professional.name}</div>
-                <div className="text-sm opacity-75">{professional.email}</div>
-              </div>
-            </button>
-          ))}
-        </div>
+                <div
+                  className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                    professionalId === professional.id
+                      ? "bg-blue-700 text-white"
+                      : "bg-gray-100"
+                  }`}
+                >
+                  {professional.photo ? (
+                    <img
+                      src={professional.photo}
+                      alt={professional.name}
+                      className="w-10 h-10 rounded-full object-cover"
+                    />
+                  ) : (
+                    <span className="text-sm font-medium">
+                      {getInitials(professional.name)}
+                    </span>
+                  )}
+                </div>
+                <div className="text-left">
+                  <div className="font-medium">{professional.name}</div>
+                  <div className="text-sm opacity-75">{professional.email}</div>
+                </div>
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Selector de Fecha - Barra de días de la semana */}

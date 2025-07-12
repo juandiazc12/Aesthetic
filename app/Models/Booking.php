@@ -22,7 +22,8 @@ class Booking extends Model
         'payment_status',
         'payment_details',
         'payment_method',
-        'payment_completed_at'
+        'payment_completed_at',
+        'cancelled_at',
     ];
 
     protected $casts = [
@@ -30,6 +31,7 @@ class Booking extends Model
         'payment_completed_at' => 'datetime',
         'payment_details' => 'array',
         'total_amount' => 'decimal:2',
+        'cancelled_at' => 'datetime',
     ];
 
     // Relación con el servicio
@@ -110,14 +112,14 @@ class Booking extends Model
     }
 
     // Accessor para el estado de la reserva en español
-    public function getStatusSpanishAttribute()
+    public function getStatusSpanishAttribute(): string
     {
-        return match($this->status) {
+        return match ($this->status) {
             'pending' => 'Pendiente',
-            'active' => 'Activa',
+            'confirmed' => 'Confirmada',
             'completed' => 'Completada',
             'cancelled' => 'Cancelada',
-            default => 'Desconocido'
+            default => 'Desconocido',
         };
     }
 }
