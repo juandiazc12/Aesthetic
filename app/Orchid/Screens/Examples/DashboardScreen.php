@@ -18,7 +18,7 @@ use Carbon\Carbon;
 
 class DashboardScreen extends Screen
 {
-    public function query(Request $request): iterable
+    public function query(Request $request): array
     {
         $user = auth()->user();
         $isAdmin = $user && method_exists($user, 'hasAnyRole') && $user->hasAnyRole(['admin']);
@@ -31,31 +31,36 @@ class DashboardScreen extends Screen
         }
         $pendingBookingsCount = $pendingBookingsQuery->count();
 
-        $query = Booking::where('status', '!=', 'cancelled');
-        if ($professionalId) {
+        // Metrics query: For admins, show all unless professional_id is specified
+        $query = Booking::whereNotIn('status', ['cancelled', 'completed']);
+        if ($professionalId && (!$isAdmin || $request->input('professional_id') !== '')) {
             $query->where('professional_id', $professionalId);
         }
 
         $totalBookings = $query->count();
-        $bookingsToday = $query->whereDate('scheduled_at', today())->count();
-        $monthlyRevenue = $query->where('payment_status', 'paid')
-            ->whereMonth('payment_completed_at', now()->month)
+        $bookingsToday = $query->whereDate('scheduled_at', Carbon::today('America/Bogota'))->count();
+        $monthlyRevenue = Booking::where('payment_status', 'paid')
+            ->whereMonth('payment_completed_at', Carbon::now('America/Bogota')->month)
+            ->when($professionalId && (!$isAdmin || $request->input('professional_id') !== ''), fn($q) => $q->where('professional_id', $professionalId))
             ->sum('total_amount');
 
         $serviceRanking = Booking::select('service_id')
-            ->where('status', '!=', 'cancelled')
-            ->when($professionalId, fn($q) => $q->where('professional_id', $professionalId))
+            ->whereNotIn('status', ['cancelled', 'completed'])
+            ->when($professionalId && (!$isAdmin || $request->input('professional_id') !== ''), fn($q) => $q->where('professional_id', $professionalId))
             ->groupBy('service_id')
             ->orderByRaw('COUNT(*) DESC')
             ->take(5)
             ->with('service')
             ->get()
-            ->map(function ($booking) {
+            ->map(function ($booking) use ($isAdmin, $professionalId, $request) {
+                $countQuery = Booking::where('service_id', $booking->service_id)
+                    ->whereNotIn('status', ['cancelled', 'completed']);
+                if ($professionalId && (!$isAdmin || $request->input('professional_id') !== '')) {
+                    $countQuery->where('professional_id', $professionalId);
+                }
                 $result = [
                     'service_name' => is_object($booking->service) ? $booking->service->name : 'Sin servicio',
-                    'count' => Booking::where('service_id', $booking->service_id)
-                        ->where('status', '!=', 'cancelled')
-                        ->count(),
+                    'count' => $countQuery->count(),
                 ];
                 Log::debug('Service ranking item', $result);
                 return $result;
@@ -65,10 +70,10 @@ class DashboardScreen extends Screen
             ->pluck('name', 'id')
             ->toArray() : [];
 
-        $selectedDate = $request->input('selected_date', today()->format('Y-m-d'));
-        $dailyBookings = Booking::where('status', '!=', 'cancelled')
+        $selectedDate = $request->input('selected_date', Carbon::today('America/Bogota')->format('Y-m-d'));
+        $dailyBookings = Booking::whereNotIn('status', ['cancelled', 'completed'])
             ->whereDate('scheduled_at', $selectedDate)
-            ->when($professionalId, fn($q) => $q->where('professional_id', $professionalId))
+            ->when($professionalId && (!$isAdmin || $request->input('professional_id') !== ''), fn($q) => $q->where('professional_id', $professionalId))
             ->with(['service', 'professional', 'customer'])
             ->get()
             ->map(function ($booking) {
@@ -77,7 +82,8 @@ class DashboardScreen extends Screen
                     'service' => is_object($booking->service) ? $booking->service->name : 'Sin servicio',
                     'professional' => is_object($booking->professional) ? $booking->professional->name : 'Sin profesional',
                     'customer' => is_object($booking->customer) ? $booking->customer->name : 'Sin cliente',
-                    'scheduled_at' => $booking->scheduled_at instanceof \Carbon\Carbon ? $booking->scheduled_at->format('H:i') : 'Sin horario',
+                    'scheduled_at' => $booking->scheduled_at instanceof \Carbon\Carbon ? Carbon::parse($booking->scheduled_at, 'America/Bogota')->format('H:i') : 'Sin horario',
+                    'duration' => is_object($booking->service) ? $booking->service->duration : null,
                     'status' => $booking->statusSpanish ?? 'Desconocido',
                     'total_amount' => $booking->total_amount !== null ? number_format((float)$booking->total_amount, 0) : '0',
                 ];
@@ -96,7 +102,7 @@ class DashboardScreen extends Screen
             'daily_bookings' => $dailyBookings,
             'selected_date' => $selectedDate,
             'is_admin' => $isAdmin,
-            'pending_bookings_count' => $pendingBookingsCount, // Added for navigation badge
+            'pending_bookings_count' => $pendingBookingsCount,
         ];
     }
 
@@ -139,6 +145,7 @@ class DashboardScreen extends Screen
                 TD::make('professional', 'Profesional')->render(fn ($item) => $item['professional']),
                 TD::make('customer', 'Cliente')->render(fn ($item) => $item['customer']),
                 TD::make('scheduled_at', 'Hora')->render(fn ($item) => $item['scheduled_at']),
+                TD::make('duration', 'Duración (min)')->render(fn ($item) => $item['duration']),
                 TD::make('status', 'Estado')->render(fn ($item) => $item['status']),
                 TD::make('total_amount', 'Monto')->render(fn ($item) => $item['total_amount']),
             ])->title('Citas del Día Seleccionado'),
@@ -152,11 +159,7 @@ class DashboardScreen extends Screen
                         ->options(['' => 'Todos los Profesionales'] + $queryData['professionals'])
                         ->title('Filtrar por Profesional')
                         ->empty('Todos los Profesionales')
-                        ->value(request()->input('professional_id')),
-                    Select::make('selected_date')
-                        ->title('Seleccionar Fecha')
-                        ->type('date')
-                        ->value(request()->input('selected_date', today()->format('Y-m-d'))),
+                        ->value($queryData['professional_id'] ?? ''),
                 ])->title('Filtros'),
             ]);
         }
@@ -168,17 +171,18 @@ class DashboardScreen extends Screen
     {
         try {
             $user = auth()->user();
-            $professionalId = ($user && method_exists($user, 'hasAnyRole') && $user->hasAnyRole(['admin'])) ? $request->input('professional_id') : ($user ? $user->id : null);
+            $isAdmin = $user && method_exists($user, 'hasAnyRole') && $user->hasAnyRole(['admin']);
+            $professionalId = $isAdmin ? $request->input('professional_id') : ($user ? $user->id : null);
 
             $bookings = Booking::with('service')
-                ->where('status', '!=', 'cancelled')
-                ->when($professionalId, fn($q) => $q->where('professional_id', $professionalId))
+                ->whereNotIn('status', ['cancelled', 'completed'])
+                ->when($professionalId && (!$isAdmin || $request->input('professional_id') !== ''), fn($q) => $q->where('professional_id', $professionalId))
                 ->get();
 
             $events = $bookings->map(function ($booking) {
                 $startDate = $booking->scheduled_at instanceof \Carbon\Carbon
-                    ? $booking->scheduled_at->toIso8601String()
-                    : now()->toIso8601String();
+                    ? Carbon::parse($booking->scheduled_at, 'America/Bogota')->toIso8601String()
+                    : Carbon::now('America/Bogota')->toIso8601String();
 
                 return [
                     'id' => $booking->id,
@@ -187,9 +191,9 @@ class DashboardScreen extends Screen
                     'url' => route('platform.bookings.edit', $booking),
                     'extendedProps' => [
                         'canCancel' => $booking->scheduled_at instanceof \Carbon\Carbon
-                            ? Carbon::now()->lt($booking->scheduled_at->subHour())
+                            ? Carbon::now('America/Bogota')->lt(Carbon::parse($booking->scheduled_at, 'America/Bogota')->subHour())
                             : false,
-                        'status' => $booking->status,
+                        'status' => $booking->statusSpanish,
                     ],
                 ];
             })->toArray();
@@ -206,13 +210,14 @@ class DashboardScreen extends Screen
     public function cancelBooking(Booking $booking): JsonResponse
     {
         try {
-            if ($booking->scheduled_at instanceof \Carbon\Carbon && Carbon::now()->gte($booking->scheduled_at->subHour())) {
+            $scheduledAt = Carbon::parse($booking->scheduled_at, 'America/Bogota');
+            if ($scheduledAt instanceof \Carbon\Carbon && Carbon::now('America/Bogota')->gte($scheduledAt->subHour())) {
                 return response()->json(['error' => 'No se puede cancelar menos de 1 hora antes.'], 403);
             }
 
             $booking->update([
                 'status' => 'cancelled',
-                'cancelled_at' => now(),
+                'cancelled_at' => Carbon::now('America/Bogota'),
             ]);
 
             return response()->json(['success' => true, 'message' => 'Cita cancelada exitosamente.']);

@@ -14,7 +14,6 @@ class BookingController extends Controller
 {
     public function show($serviceId = null)
     {
-        
         $services = Service::where('status', 'active')
             ->get()
             ->map(function ($service) {
@@ -28,13 +27,11 @@ class BookingController extends Controller
                 ];
             });
 
-            $professionals = collect();
+        $professionals = collect();
         if ($serviceId) {
             $service = Service::findOrFail($serviceId);
-            // Buscar ServiceList por el nombre del servicio
             $serviceList = ServiceList::where('name', $service->name)->first();
             if ($serviceList) {
-                // Obtener profesionales asociados a ServiceList desde service_list_user
                 $professionals = $serviceList->servicesList()
                     ->whereHas('roles', function ($query) {
                         $query->where('slug', 'profesional');
@@ -43,7 +40,6 @@ class BookingController extends Controller
                     ->get();
             }
         } else {
-            // Si no hay serviceId, obtener todos los profesionales con rol 'profesional'
             $professionals = User::whereHas('roles', function ($query) {
                 $query->where('slug', 'profesional');
             })->select('id', 'name', 'email', 'photo')->get();
@@ -54,7 +50,6 @@ class BookingController extends Controller
             'professionals' => $professionals,
             'selectedService' => $serviceId ? $service : null,
         ]);
-        
     }
 
     public function getProfessionalsByService($serviceId)
@@ -89,45 +84,43 @@ class BookingController extends Controller
             ]);
             $professionalId = $request->professional_id;
             $date = $request->date;
-            
-            $requestDate = Carbon::parse($date);
+
+            $requestDate = Carbon::parse($date, 'America/Bogota');
             if ($requestDate->isPast() && !$requestDate->isToday()) {
                 return response()->json(['error' => 'No se pueden reservar fechas pasadas'], 400);
             }
-            
+
             $bookedTimes = Booking::whereDate('scheduled_at', $date)
                 ->where('professional_id', $professionalId)
-                ->whereNotIn('status', ['cancelled'])
+                ->whereNotIn('status', ['cancelled', 'completed'])
                 ->pluck('scheduled_at')
                 ->map(function ($item) {
-                    return Carbon::parse($item)->format('H:i');
+                    return Carbon::parse($item, 'America/Bogota')->format('H:i');
                 })
                 ->toArray();
-            
+
             $timeSlots = [
                 'morning' => ['07:00', '08:00', '09:00', '10:00', '11:00'],
                 'afternoon' => ['12:00', '13:00', '14:00', '15:00', '16:00', '17:00'],
                 'evening' => ['18:00', '19:00', '20:00', '21:00', '22:00']
             ];
-            
+
             $availableSlots = [];
             foreach ($timeSlots as $period => $slots) {
                 $availableSlots[$period] = [];
-                
                 foreach ($slots as $slot) {
                     if ($requestDate->isToday()) {
-                        $slotTime = Carbon::parse($date . ' ' . $slot);
+                        $slotTime = Carbon::parse($date . ' ' . $slot, 'America/Bogota');
                         if ($slotTime->isPast()) {
                             continue;
                         }
                     }
-                    
                     if (!in_array($slot, $bookedTimes)) {
                         $availableSlots[$period][] = $slot;
                     }
                 }
             }
-            
+
             return response()->json($availableSlots);
         } catch (\Exception $e) {
             Log::error('Error getting available slots: ' . $e->getMessage());
@@ -156,9 +149,11 @@ class BookingController extends Controller
             ]);
         }
 
+        $scheduledAt = Carbon::parse($request->scheduled_at, 'America/Bogota');
+
         $existingBooking = Booking::where('professional_id', $request->professional_id)
-            ->where('scheduled_at', $request->scheduled_at)
-            ->whereNotIn('status', ['cancelled'])
+            ->where('scheduled_at', $scheduledAt)
+            ->whereNotIn('status', ['cancelled', 'completed'])
             ->first();
 
         if ($existingBooking) {
@@ -175,14 +170,15 @@ class BookingController extends Controller
                 'customer_id' => $customer->id,
                 'service_id' => $request->service_id,
                 'professional_id' => $request->professional_id,
-                'scheduled_at' => $request->scheduled_at,
+                'scheduled_at' => $scheduledAt,
                 'payment_method' => $request->payment_method,
                 'total_amount' => $request->payment_method === 'efectivo' ? $service->price : $request->payment_amount,
-                'payment_id' => $request->payment_method === 'efectivo' ? ($request->payment_transaction_id ?? 'cash_' . now()->timestamp) : $request->payment_transaction_id,
+                'payment_id' => $request->payment_method === 'efectivo' ? ($request->payment_transaction_id ?? 'cash_' . Carbon::now('America/Bogota')->timestamp) : $request->payment_transaction_id,
                 'payment_status' => $request->payment_method === 'efectivo' ? 'paid' : ($request->payment_status ?? 'pending'),
                 'service' => [
                     'name' => $service->name,
                     'price' => $service->price,
+                    'duration' => $service->duration,
                 ],
                 'professional' => [
                     'name' => $professional->name,
@@ -227,9 +223,11 @@ class BookingController extends Controller
             ]);
         }
 
+        $scheduledAt = Carbon::parse($request->scheduled_at, 'America/Bogota');
+
         $existingBooking = Booking::where('professional_id', $request->professional_id)
-            ->where('scheduled_at', $request->scheduled_at)
-            ->whereNotIn('status', ['cancelled'])
+            ->where('scheduled_at', $scheduledAt)
+            ->whereNotIn('status', ['cancelled', 'completed'])
             ->first();
 
         if ($existingBooking) {
@@ -245,13 +243,13 @@ class BookingController extends Controller
                 'customer_id' => $customer->id,
                 'service_id' => $request->service_id,
                 'professional_id' => $request->professional_id,
-                'scheduled_at' => $request->scheduled_at,
+                'scheduled_at' => $scheduledAt,
                 'status' => 'pending',
                 'total_amount' => $request->payment_method === 'efectivo' ? $service->price : $request->payment_amount,
                 'payment_method' => $request->payment_method,
                 'payment_status' => $request->payment_method === 'efectivo' ? 'paid' : $request->payment_status,
-                'payment_id' => $request->payment_method === 'efectivo' ? ($request->payment_transaction_id ?? 'cash_' . now()->timestamp) : $request->payment_transaction_id,
-                'payment_completed_at' => $request->payment_method === 'efectivo' ? now() : ($request->payment_status === 'paid' ? now() : null),
+                'payment_id' => $request->payment_method === 'efectivo' ? ($request->payment_transaction_id ?? 'cash_' . Carbon::now('America/Bogota')->timestamp) : $request->payment_transaction_id,
+                'payment_completed_at' => $request->payment_method === 'efectivo' ? Carbon::now('America/Bogota') : ($request->payment_status === 'paid' ? Carbon::now('America/Bogota') : null),
             ]);
 
             session()->forget('booking_data_' . $request->temp_id);
@@ -265,6 +263,7 @@ class BookingController extends Controller
                     'service' => [
                         'name' => $service->name,
                         'price' => $service->price,
+                        'duration' => $service->duration,
                     ],
                     'professional' => [
                         'name' => $professional->name,
@@ -295,10 +294,11 @@ class BookingController extends Controller
 
                 $bookingData = [
                     'id' => $booking->id,
-                    'scheduled_at' => $booking->scheduled_at,
+                    'scheduled_at' => Carbon::parse($booking->scheduled_at, 'America/Bogota'),
                     'service' => [
                         'name' => $booking->service->name,
                         'price' => $booking->service->price,
+                        'duration' => $booking->service->duration,
                     ],
                     'professional' => [
                         'name' => $booking->professional->name,
@@ -311,6 +311,7 @@ class BookingController extends Controller
             } else {
                 $bookingData['is_confirmed'] = false;
                 $bookingData['total_amount'] = $bookingData['total_amount'] ?? $bookingData['service']['price'];
+                $bookingData['scheduled_at'] = Carbon::parse($bookingData['scheduled_at'], 'America/Bogota');
             }
 
             Log::info('Mostrando confirmación de reserva', [
@@ -335,40 +336,41 @@ class BookingController extends Controller
             $booking = Booking::where('id', $bookingId)
                 ->where('customer_id', Auth::guard('customer')->id())
                 ->firstOrFail();
-            
+
             Log::info('Intentando confirmar reserva', [
                 'booking_id' => $booking->id,
                 'current_status' => $booking->status,
                 'payment_method' => $booking->payment_method
             ]);
-            
+
             if (!in_array($booking->status, ['pending', 'confirmed'])) {
                 return response()->json([
                     'success' => false,
                     'error' => 'La reserva no puede ser confirmada desde su estado actual: ' . $booking->status
                 ], 400);
             }
-            
+
             $booking->update([
                 'status' => 'confirmed',
-                'confirmed_at' => now(),
+                'confirmed_at' => Carbon::now('America/Bogota'),
             ]);
-            
+
             Log::info('Reserva confirmada exitosamente', [
                 'booking_id' => $booking->id,
                 'new_status' => $booking->status,
                 'confirmed_at' => $booking->confirmed_at
             ]);
-            
+
             return response()->json([
                 'success' => true,
                 'message' => 'Reserva confirmada exitosamente',
                 'booking' => [
                     'id' => $booking->id,
-                    'scheduled_at' => $booking->scheduled_at,
+                    'scheduled_at' => Carbon::parse($booking->scheduled_at, 'America/Bogota'),
                     'service' => [
                         'name' => $booking->service->name,
                         'price' => $booking->service->price,
+                        'duration' => $booking->service->duration,
                     ],
                     'professional' => [
                         'name' => $booking->professional->name,
@@ -379,7 +381,7 @@ class BookingController extends Controller
                     'is_confirmed' => true,
                 ],
             ]);
-            
+
         } catch (\Exception $e) {
             Log::error('Error confirmando reserva: ' . $e->getMessage());
             return response()->json([
@@ -406,32 +408,34 @@ class BookingController extends Controller
                         'name' => $booking->professional->name,
                         'photo' => $booking->professional->photo,
                     ],
-                    'scheduled_at' => $booking->scheduled_at,
-                    'scheduled_date' => Carbon::parse($booking->scheduled_at)->format('d/m/Y'),
-                    'scheduled_time' => Carbon::parse($booking->scheduled_at)->format('H:i'),
-                    'scheduled_day' => Carbon::parse($booking->scheduled_at)->format('l'),
+                    'scheduled_at' => Carbon::parse($booking->scheduled_at, 'America/Bogota'),
+                    'scheduled_date' => Carbon::parse($booking->scheduled_at, 'America/Bogota')->format('d/m/Y'),
+                    'scheduled_time' => Carbon::parse($booking->scheduled_at, 'America/Bogota')->format('H:i'),
+                    'scheduled_day' => $this->getDayNameInSpanish(Carbon::parse($booking->scheduled_at, 'America/Bogota')->format('l')),
                     'total_amount' => $booking->total_amount,
                     'payment_method' => $booking->payment_method,
                     'payment_status' => $booking->payment_status,
                     'status' => $booking->status,
-                    'created_at' => $booking->created_at,
+                    'status_spanish' => $booking->statusSpanish,
+                    'created_at' => Carbon::parse($booking->created_at, 'America/Bogota'),
+                    'completed_at' => $booking->completed_at ? Carbon::parse($booking->completed_at, 'America/Bogota') : null,
                 ];
             });
-        
+
         return Inertia::render('Booking/BookingList', [
             'bookings' => $bookings
         ]);
     }
 
-     public function destroy($id)
+    public function destroy($id)
     {
         try {
             $booking = Booking::where('id', $id)
                 ->where('customer_id', Auth::guard('customer')->id())
                 ->firstOrFail();
 
-            $scheduledAt = Carbon::parse($booking->scheduled_at);
-            $now = Carbon::now();
+            $scheduledAt = Carbon::parse($booking->scheduled_at, 'America/Bogota');
+            $now = Carbon::now('America/Bogota');
             $oneHourBefore = $scheduledAt->copy()->subHour();
 
             if ($now->greaterThanOrEqualTo($oneHourBefore)) {
@@ -454,7 +458,7 @@ class BookingController extends Controller
 
             $booking->update([
                 'status' => 'cancelled',
-                'cancelled_at' => now(),
+                'cancelled_at' => Carbon::now('America/Bogota'),
             ]);
 
             Log::info('Booking cancelled', ['booking_id' => $booking->id]);
@@ -479,8 +483,8 @@ class BookingController extends Controller
                 ->where('customer_id', Auth::guard('customer')->id())
                 ->firstOrFail();
 
-            $scheduledAt = Carbon::parse($booking->scheduled_at);
-            $now = Carbon::now();
+            $scheduledAt = Carbon::parse($booking->scheduled_at, 'America/Bogota');
+            $now = Carbon::now('America/Bogota');
             $oneHourBefore = $scheduledAt->copy()->subHour();
 
             if ($now->greaterThanOrEqualTo($oneHourBefore)) {
@@ -501,9 +505,11 @@ class BookingController extends Controller
                 'scheduled_at' => 'required|date|after:now',
             ]);
 
+            $newScheduledAt = Carbon::parse($request->scheduled_at, 'America/Bogota');
+
             $existingBooking = Booking::where('professional_id', $request->professional_id)
-                ->where('scheduled_at', $request->scheduled_at)
-                ->whereNotIn('status', ['cancelled'])
+                ->where('scheduled_at', $newScheduledAt)
+                ->whereNotIn('status', ['cancelled', 'completed'])
                 ->where('id', '!=', $id)
                 ->first();
 
@@ -514,7 +520,7 @@ class BookingController extends Controller
             $booking->update([
                 'service_id' => $request->service_id,
                 'professional_id' => $request->professional_id,
-                'scheduled_at' => $request->scheduled_at,
+                'scheduled_at' => $newScheduledAt,
                 'status' => 'pending',
             ]);
 
@@ -534,7 +540,7 @@ class BookingController extends Controller
                         'name' => $booking->professional->name,
                         'photo' => $booking->professional->photo ? \Storage::url($booking->professional->photo) : null,
                     ],
-                    'scheduled_at' => $booking->scheduled_at,
+                    'scheduled_at' => Carbon::parse($booking->scheduled_at, 'America/Bogota'),
                     'status' => $booking->status,
                 ],
             ]);
@@ -547,7 +553,6 @@ class BookingController extends Controller
         }
     }
 
-
     public function getAvailableDates(Request $request)
     {
         try {
@@ -555,35 +560,35 @@ class BookingController extends Controller
                 'professional_id' => 'required|exists:users,id',
                 'week_offset' => 'integer|min:0|max:12',
             ]);
-            
+
             $professionalId = $request->professional_id;
             $weekOffset = $request->week_offset ?? 0;
-            
-            $startOfWeek = Carbon::now()->startOfWeek()->addWeeks($weekOffset);
+
+            $startOfWeek = Carbon::now('America/Bogota')->startOfWeek()->addWeeks($weekOffset);
             $endOfWeek = $startOfWeek->copy()->endOfWeek();
-            
+
             $bookedDays = Booking::where('professional_id', $professionalId)
                 ->whereBetween('scheduled_at', [$startOfWeek, $endOfWeek])
-                ->whereNotIn('status', ['cancelled'])
+                ->whereNotIn('status', ['cancelled', 'completed'])
                 ->get()
                 ->groupBy(function ($booking) {
-                    return Carbon::parse($booking->scheduled_at)->format('Y-m-d');
+                    return Carbon::parse($booking->scheduled_at, 'America/Bogota')->format('Y-m-d');
                 })
                 ->map(function ($dayBookings) {
                     return $dayBookings->count();
                 });
-            
+
             $weekDays = [];
             $currentDate = $startOfWeek->copy();
             $maxSlotsPerDay = 15;
-            $today = Carbon::now()->format('Y-m-d');
-            
+            $today = Carbon::now('America/Bogota')->format('Y-m-d');
+
             for ($i = 0; $i < 7; $i++) {
                 $dateKey = $currentDate->format('Y-m-d');
                 $bookedCount = $bookedDays->get($dateKey, 0);
                 $isPast = $currentDate->isPast() && !$currentDate->isToday();
                 $isToday = $currentDate->format('Y-m-d') === $today;
-                
+
                 $weekDays[] = [
                     'date' => $dateKey,
                     'day_name' => $currentDate->format('l'),
@@ -598,10 +603,10 @@ class BookingController extends Controller
                     'booked_count' => $bookedCount,
                     'slots_available' => max(0, $maxSlotsPerDay - $bookedCount),
                 ];
-                
+
                 $currentDate->addDay();
             }
-            
+
             return response()->json([
                 'week_days' => $weekDays,
                 'week_start' => $startOfWeek->format('Y-m-d'),
@@ -629,7 +634,7 @@ class BookingController extends Controller
             'Saturday' => 'Sábado',
             'Sunday' => 'Domingo',
         ];
-        
+
         return $days[$dayName] ?? $dayName;
     }
 
@@ -637,7 +642,7 @@ class BookingController extends Controller
     {
         $startMonth = $startOfWeek->format('M');
         $endMonth = $endOfWeek->format('M');
-        
+
         if ($startMonth === $endMonth) {
             return $startOfWeek->format('d') . ' - ' . $endOfWeek->format('d M Y');
         } else {

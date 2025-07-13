@@ -24,6 +24,7 @@ class Booking extends Model
         'payment_method',
         'payment_completed_at',
         'cancelled_at',
+        'completed_at',
     ];
 
     protected $casts = [
@@ -32,6 +33,7 @@ class Booking extends Model
         'payment_details' => 'array',
         'total_amount' => 'float',
         'cancelled_at' => 'datetime',
+        'completed_at' => 'datetime',
     ];
 
     // Relación con el servicio
@@ -75,7 +77,7 @@ class Booking extends Model
             'payment_id' => $paymentId,
             'payment_details' => $paymentDetails,
             'payment_completed_at' => now(),
-            'status' => 'active' // Cambiar el estado de la reserva a activa
+            'status' => 'confirmed', 
         ]);
     }
 

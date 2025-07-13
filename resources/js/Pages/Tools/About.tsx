@@ -1,59 +1,12 @@
 import Layout from "@/Layouts/Layout";
 import { Head } from "@inertiajs/react";
 
-export default function About() {
-  const team = [
-    {
-      name: "Dra. María González",
-      role: "Directora Médica",
-      specialization: "Medicina Estética",
-      image: "https://via.placeholder.com/300x300",
-      experience: "15 años de experiencia"
-    },
-    {
-      name: "Dr. Carlos Martínez",
-      role: "Especialista en Dermatología",
-      specialization: "Tratamientos Faciales",
-      image: "https://via.placeholder.com/300x300",
-      experience: "12 años de experiencia"
-    },
-    {
-      name: "Dra. Ana Rodríguez",
-      role: "Especialista en Medicina Estética",
-      specialization: "Tratamientos Corporales",
-      image: "https://via.placeholder.com/300x300",
-      experience: "10 años de experiencia"
-    }
-  ];
-
-  const values = [
-    {
-      title: "Excelencia",
-      description: "Comprometidos con los más altos estándares de calidad en cada tratamiento.",
-      icon: "⭐"
-    },
-    {
-      title: "Innovación",
-      description: "Utilizamos las últimas tecnologías y técnicas en medicina estética.",
-      icon: "🔬"
-    },
-    {
-      title: "Confianza",
-      description: "Construimos relaciones duraderas basadas en la transparencia y honestidad.",
-      icon: "🤝"
-    },
-    {
-      title: "Personalización",
-      description: "Cada tratamiento se adapta a las necesidades únicas de nuestros pacientes.",
-      icon: "👤"
-    }
-  ];
-
+export default function About({ team, values }) {
   return (
-
-      <>
-        <Head title="Quiénes Somos - AESTHECTIC" />
-        
+    <>
+      <Head title="Quiénes Somos - AESTHECTIC" />
+      
+      <Layout>
         <div className="max-w-6xl mx-auto py-8">
           {/* Hero Section */}
           <div className="text-center mb-16">
@@ -132,11 +85,18 @@ export default function About() {
                       {member.role}
                     </p>
                     <p className="text-gray-600 dark:text-gray-300 text-sm mb-2">
-                      {member.specialization}
-                    </p>
-                    <p className="text-gray-500 dark:text-gray-400 text-sm">
                       {member.experience}
                     </p>
+                    {member.services && member.services.length > 0 && (
+                      <div className="text-gray-600 dark:text-gray-300 text-sm">
+                        <p className="font-medium">Servicios:</p>
+                        <ul className="list-disc pl-5">
+                          {member.services.map((service, idx) => (
+                            <li key={idx}>{service}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}
@@ -199,7 +159,7 @@ export default function About() {
             </div>
           </div>
         </div>
-      </>
-
+      </Layout>
+    </>
   );
 }

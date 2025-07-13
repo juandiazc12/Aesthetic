@@ -1,10 +1,9 @@
 <?php
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\BookingController;
+use App\Http\Controllers\AboutController;
 use App\Http\Controllers\Services;
-use App\Http\Controllers\PagesController;
 use App\Http\Controllers\MercadoPagoController;
-use App\Http\Controllers\BinLookController;
 use Inertia\Inertia;
 
 Route::get('/', [\App\Http\Controllers\Welcome::class, 'index'])->name('welcome');
@@ -25,7 +24,7 @@ Route::middleware(['guest:customer'])->prefix('customer')->group(function () {
 });
 
 // Rutas protegidas para clientes
-Route::middleware([\App\Http\Middleware\RedirectIfNotCustomer::class])->prefix('customer')->group(function () {
+Route::middleware([\App\Http\Middleware\RedirectIfNotCustomer::class, 'auth:customer'])->prefix('customer')->group(function () {
     Route::get('/logout', [\App\Http\Controllers\AuthController::class, 'logout'])->name('customer.logout');
     
     Route::get('/settings', function () {
@@ -38,7 +37,7 @@ Route::middleware(['auth:customer'])->group(function () {
     // Páginas principales
     Route::get('/booking/{service?}', [BookingController::class, 'show'])->name('booking.show');
     Route::get('/booking/{booking}/confirmation', [BookingController::class, 'confirmation'])->name('booking.confirmation');
-    Route::get('/bookings', [BookingController::class, 'list'])->name('booking.BookingList');
+    Route::get('/bookingList', [BookingController::class, 'list'])->name('booking.BookingList');
     
     // APIs para crear y confirmar reservas
     Route::post('/booking', [BookingController::class, 'store'])->name('booking.store');
@@ -50,8 +49,9 @@ Route::middleware(['auth:customer'])->group(function () {
     Route::get('/api/available-dates', [BookingController::class, 'getAvailableDates'])->name('api.available-dates');
     Route::get('/api/available-slots', [BookingController::class, 'getAvailableSlots'])->name('api.available-slots');
     
-    // Eliminación de reservas
+    // Eliminación y actualización de reservas
     Route::delete('/bookings/{id}', [BookingController::class, 'destroy'])->name('bookings.destroy');
+    Route::put('/bookings/{id}', [BookingController::class, 'update'])->name('bookings.update');
 });
 
 // Rutas de reservas sin autenticación
@@ -61,7 +61,6 @@ Route::get('/booking/success', function () {
 
 // API Routes
 Route::prefix('api')->group(function () {
-    Route::get('/binlist/{bin}', [BinLookController::class, 'getBankInfo']);
     Route::post('/mercadopago/create-preference', [MercadoPagoController::class, 'createPreference']);
     Route::post('/mercadopago/webhook', [MercadoPagoController::class, 'webhook'])->name('payment.webhook');
 });
@@ -77,9 +76,7 @@ Route::prefix('tools')->group(function () {
     Route::get('/blog', function () {
         return Inertia::render('Tools/Blog', []);
     })->name('tools.blog');
-    Route::get('/about', function () {
-        return Inertia::render('Tools/About', []);
-    })->name('tools.about');
+     Route::get('/about', [AboutController::class, 'index'])->name('tools.about');
     Route::get('/pqrs', function () {
         return Inertia::render('Tools/PQRS', []);
     })->name('tools.pqrs');
@@ -91,7 +88,7 @@ Route::prefix('tools')->group(function () {
     })->name('tools.careers');
 });
 
-// API Routes para booking
+// API Routes para booking (redundantes, se mantienen por compatibilidad)
 Route::prefix('api/booking')->group(function () {
     Route::get('professionals/{serviceId}', [BookingController::class, 'getProfessionalsByService']);
     Route::post('available-slots', [BookingController::class, 'getAvailableSlots']);
@@ -99,10 +96,3 @@ Route::prefix('api/booking')->group(function () {
     Route::post('create', [BookingController::class, 'store']);
     Route::post('confirm-store', [BookingController::class, 'confirmStore']);
 });
-
-Route::get('/booking/bookingconfirmation/{id}', function ($id) {
-    $booking = \App\Models\Booking::with('service', 'professional')->findOrFail($id);
-    return Inertia::render('Booking/BookingConfirmation', [
-        'booking' => $booking
-    ]);
-})->name('booking.bookingconfirmation');
