@@ -2,7 +2,8 @@
 declare(strict_types=1);
 
 namespace App\Orchid;
-use App\Models\Booking; // Importar el modelo Booking
+
+use App\Models\Booking;
 use Orchid\Platform\Dashboard;
 use Orchid\Platform\ItemPermission;
 use Orchid\Platform\OrchidServiceProvider;
@@ -21,8 +22,18 @@ class PlatformProvider extends OrchidServiceProvider
         return [
             Menu::make('Dashboard')
                 ->icon('bs.collection')
-                ->route('platform.example')
-                ->badge(fn () => Booking::whereDate('scheduled_at', today())->count()),
+                ->route('platform.dashboard')
+                ->badge(function () {
+                    $user = auth()->user();
+                    $isAdmin = $user && method_exists($user, 'hasAnyRole') && $user->hasAnyRole(['admin']);
+                    $professionalId = $isAdmin ? null : ($user ? $user->id : null);
+
+                    $query = Booking::where('status', 'pending');
+                    if (!$isAdmin && $professionalId) {
+                        $query->where('professional_id', $professionalId);
+                    }
+                    return $query->count();
+                }),
 
             Menu::make('Cards')
                 ->icon('bs.card-text')

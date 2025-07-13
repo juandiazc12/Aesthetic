@@ -1,15 +1,8 @@
 <?php
 declare(strict_types=1);
 
-use App\Orchid\Screens\Examples\ExampleActionsScreen;
+use App\Orchid\Screens\Examples\DashboardScreen;
 use App\Orchid\Screens\Examples\ExampleCardsScreen;
-use App\Orchid\Screens\Examples\ExampleChartsScreen;
-use App\Orchid\Screens\Examples\ExampleFieldsAdvancedScreen;
-use App\Orchid\Screens\Examples\ExampleFieldsScreen;
-use App\Orchid\Screens\Examples\ExampleGridScreen;
-use App\Orchid\Screens\Examples\ExampleLayoutsScreen;
-use App\Orchid\Screens\Examples\ExampleScreen;
-use App\Orchid\Screens\Examples\ExampleTextEditorsScreen;
 use App\Orchid\Screens\PlatformScreen;
 use App\Orchid\Screens\Role\RoleEditScreen;
 use App\Orchid\Screens\Role\RoleListScreen;
@@ -77,23 +70,16 @@ Route::screen('services/{service_list}/edit', ServiceListScreen::class)
         ->parent('platform.services')
         ->push($service_list->name, route('platform.services.edit', $service_list)));
 
-Route::screen('example', ExampleScreen::class)
-    ->name('platform.example')
+Route::screen('dasboard', DashboardScreen::class)
+    ->name('platform.dashboard')
     ->breadcrumbs(fn (Trail $trail) => $trail
         ->parent('platform.index')
         ->push('Dashboard'));
 
-Route::screen('/examples/form/fields', ExampleFieldsScreen::class)->name('platform.example.fields');
-Route::screen('/examples/form/advanced', ExampleFieldsAdvancedScreen::class)->name('platform.example.advanced');
-Route::screen('/examples/form/editors', ExampleTextEditorsScreen::class)->name('platform.example.editors');
-Route::screen('/examples/form/actions', ExampleActionsScreen::class)->name('platform.example.actions');
 
-Route::screen('/examples/layouts', ExampleLayoutsScreen::class)->name('platform.example.layouts');
-Route::screen('/examples/grid', ExampleGridScreen::class)->name('platform.example.grid');
-Route::screen('/examples/charts', ExampleChartsScreen::class)->name('platform.example.charts');
 Route::screen('/examples/cards', ExampleCardsScreen::class)->name('platform.example.cards');
 
-Route::get('/calendar/events', [ExampleScreen::class, 'getCalendarEvents'])->name('platform.calendar.events');
-Route::post('example/cancel/{booking}', [ExampleScreen::class, 'cancelBooking'])->name('platform.example.cancel');
+Route::get('/calendar/events', [DashboardScreen::class, 'getCalendarEvents'])->name('platform.calendar.events');
+Route::post('dashboard/cancel/{booking}', [DashboardScreen::class, 'cancelBooking'])->name('platform.dashboard.cancel');
 
 Route::screen('/bookings/{booking}/edit', \App\Orchid\Screens\BookingEditScreen::class)->name('platform.bookings.edit');

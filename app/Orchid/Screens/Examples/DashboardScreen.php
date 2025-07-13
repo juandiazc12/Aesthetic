@@ -12,18 +12,24 @@ use Orchid\Screen\Fields\Select;
 use Orchid\Screen\Screen;
 use Orchid\Screen\TD;
 use Orchid\Support\Facades\Layout;
-use Orchid\Support\Facades\Toast;
-use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
+use Carbon\Carbon;
 
-class ExampleScreen extends Screen
+class DashboardScreen extends Screen
 {
     public function query(Request $request): iterable
     {
         $user = auth()->user();
         $isAdmin = $user && method_exists($user, 'hasAnyRole') && $user->hasAnyRole(['admin']);
         $professionalId = $isAdmin ? $request->input('professional_id') : ($user ? $user->id : null);
+
+        // Calculate pending bookings for the notification
+        $pendingBookingsQuery = Booking::where('status', 'pending');
+        if (!$isAdmin && $professionalId) {
+            $pendingBookingsQuery->where('professional_id', $professionalId);
+        }
+        $pendingBookingsCount = $pendingBookingsQuery->count();
 
         $query = Booking::where('status', '!=', 'cancelled');
         if ($professionalId) {
@@ -45,13 +51,15 @@ class ExampleScreen extends Screen
             ->with('service')
             ->get()
             ->map(function ($booking) {
-                return [
-                    'service_name' => $booking->service->name ?? 'Sin servicio',
+                $result = [
+                    'service_name' => is_object($booking->service) ? $booking->service->name : 'Sin servicio',
                     'count' => Booking::where('service_id', $booking->service_id)
                         ->where('status', '!=', 'cancelled')
                         ->count(),
                 ];
-            });
+                Log::debug('Service ranking item', $result);
+                return $result;
+            })->toArray();
 
         $professionals = $isAdmin ? User::whereHas('roles', fn($q) => $q->where('slug', 'profesional'))
             ->pluck('name', 'id')
@@ -64,28 +72,31 @@ class ExampleScreen extends Screen
             ->with(['service', 'professional', 'customer'])
             ->get()
             ->map(function ($booking) {
-                return [
+                $result = [
                     'id' => $booking->id,
-                    'service' => $booking->service->name ?? 'Sin servicio',
-                    'professional' => $booking->professional->name ?? 'Sin profesional',
-                    'customer' => $booking->customer->name ?? 'Sin cliente',
-                    'scheduled_at' => $booking->scheduled_at->format('H:i'),
-                    'status' => $booking->statusSpanish,
-                    'total_amount' => number_format($booking->total_amount, 2),
+                    'service' => is_object($booking->service) ? $booking->service->name : 'Sin servicio',
+                    'professional' => is_object($booking->professional) ? $booking->professional->name : 'Sin profesional',
+                    'customer' => is_object($booking->customer) ? $booking->customer->name : 'Sin cliente',
+                    'scheduled_at' => $booking->scheduled_at instanceof \Carbon\Carbon ? $booking->scheduled_at->format('H:i') : 'Sin horario',
+                    'status' => $booking->statusSpanish ?? 'Desconocido',
+                    'total_amount' => $booking->total_amount !== null ? number_format((float)$booking->total_amount, 0) : '0',
                 ];
-            });
+                Log::debug('Daily booking item', $result);
+                return $result;
+            })->toArray();
 
         return [
             'metrics' => [
                 'total_bookings' => ['value' => $totalBookings],
                 'bookings_today' => ['value' => $bookingsToday],
-                'monthly_revenue' => ['value' => number_format($monthlyRevenue, 2)],
+                'monthly_revenue' => ['value' => $monthlyRevenue !== null ? number_format((float)$monthlyRevenue, 0) : '0'],
             ],
             'service_ranking' => $serviceRanking,
             'professionals' => $professionals,
             'daily_bookings' => $dailyBookings,
             'selected_date' => $selectedDate,
             'is_admin' => $isAdmin,
+            'pending_bookings_count' => $pendingBookingsCount, // Added for navigation badge
         ];
     }
 
@@ -110,6 +121,8 @@ class ExampleScreen extends Screen
 
     public function layout(): iterable
     {
+        $queryData = $this->query(request());
+
         $layouts = [
             Layout::metrics([
                 'Total de Citas' => 'metrics.total_bookings',
@@ -118,16 +131,16 @@ class ExampleScreen extends Screen
             ]),
             Layout::view('calendar'),
             Layout::table('service_ranking', [
-                TD::make('service_name', 'Servicio'),
-                TD::make('count', 'Número de Citas'),
+                TD::make('service_name', 'Servicio')->render(fn ($item) => $item['service_name']),
+                TD::make('count', 'Número de Citas')->render(fn ($item) => $item['count']),
             ])->title('Ranking de Servicios'),
             Layout::table('daily_bookings', [
-                TD::make('service', 'Servicio'),
-                TD::make('professional', 'Profesional'),
-                TD::make('customer', 'Cliente'),
-                TD::make('scheduled_at', 'Hora'),
-                TD::make('status', 'Estado'),
-                TD::make('total_amount', 'Monto'),
+                TD::make('service', 'Servicio')->render(fn ($item) => $item['service']),
+                TD::make('professional', 'Profesional')->render(fn ($item) => $item['professional']),
+                TD::make('customer', 'Cliente')->render(fn ($item) => $item['customer']),
+                TD::make('scheduled_at', 'Hora')->render(fn ($item) => $item['scheduled_at']),
+                TD::make('status', 'Estado')->render(fn ($item) => $item['status']),
+                TD::make('total_amount', 'Monto')->render(fn ($item) => $item['total_amount']),
             ])->title('Citas del Día Seleccionado'),
         ];
 
@@ -136,7 +149,7 @@ class ExampleScreen extends Screen
             array_splice($layouts, 1, 0, [
                 Layout::rows([
                     Select::make('professional_id')
-                        ->options(['' => 'Todos los Profesionales'] + $this->query()['professionals'])
+                        ->options(['' => 'Todos los Profesionales'] + $queryData['professionals'])
                         ->title('Filtrar por Profesional')
                         ->empty('Todos los Profesionales')
                         ->value(request()->input('professional_id')),
@@ -163,18 +176,20 @@ class ExampleScreen extends Screen
                 ->get();
 
             $events = $bookings->map(function ($booking) {
-                // Asegurar que scheduled_at sea una fecha válida
-                $startDate = $booking->scheduled_at && $booking->scheduled_at->isValid()
+                $startDate = $booking->scheduled_at instanceof \Carbon\Carbon
                     ? $booking->scheduled_at->toIso8601String()
                     : now()->toIso8601String();
 
                 return [
                     'id' => $booking->id,
-                    'title' => $booking->service->name ?? 'Cita',
+                    'title' => is_object($booking->service) ? $booking->service->name : 'Cita',
                     'start' => $startDate,
                     'url' => route('platform.bookings.edit', $booking),
                     'extendedProps' => [
-                        'canCancel' => Carbon::now()->lt($booking->scheduled_at && $booking->scheduled_at->isValid() ? $booking->scheduled_at->subHour() : now()),
+                        'canCancel' => $booking->scheduled_at instanceof \Carbon\Carbon
+                            ? Carbon::now()->lt($booking->scheduled_at->subHour())
+                            : false,
+                        'status' => $booking->status,
                     ],
                 ];
             })->toArray();
@@ -188,24 +203,30 @@ class ExampleScreen extends Screen
         }
     }
 
-    public function cancelBooking(Booking $booking)
+    public function cancelBooking(Booking $booking): JsonResponse
     {
-        if (Carbon::now()->gte($booking->scheduled_at && $booking->scheduled_at->isValid() ? $booking->scheduled_at->subHour() : now())) {
-            Toast::error('No se puede cancelar menos de 1 hora antes.');
-            return redirect()->back();
+        try {
+            if ($booking->scheduled_at instanceof \Carbon\Carbon && Carbon::now()->gte($booking->scheduled_at->subHour())) {
+                return response()->json(['error' => 'No se puede cancelar menos de 1 hora antes.'], 403);
+            }
+
+            $booking->update([
+                'status' => 'cancelled',
+                'cancelled_at' => now(),
+            ]);
+
+            return response()->json(['success' => true, 'message' => 'Cita cancelada exitosamente.']);
+        } catch (\Exception $e) {
+            Log::error('Error in cancelBooking: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+            ]);
+            return response()->json(['error' => 'Error al cancelar la cita: ' . $e->getMessage()], 500);
         }
-
-        $booking->update([
-            'status' => 'cancelled',
-            'cancelled_at' => now(),
-        ]);
-
-        Toast::info('Cita cancelada exitosamente.');
-        return redirect()->route('platform.example');
     }
 
     public function refresh(Request $request)
     {
-        return redirect()->route('platform.example', $request->only(['professional_id', 'selected_date']));
+        Log::info('Refresh called', $request->only(['professional_id', 'selected_date']));
+        return redirect()->route('platform.dashboard', $request->only(['professional_id', 'selected_date']));
     }
 }

@@ -30,7 +30,7 @@ class Booking extends Model
         'scheduled_at' => 'datetime',
         'payment_completed_at' => 'datetime',
         'payment_details' => 'array',
-        'total_amount' => 'decimal:2',
+        'total_amount' => 'float',
         'cancelled_at' => 'datetime',
     ];
 
@@ -107,7 +107,7 @@ class Booking extends Model
             'paid' => 'Pagado',
             'failed' => 'Fallido',
             'cancelled' => 'Cancelado',
-            default => 'Desconocido'
+            default => $this->payment_status,
         };
     }
 
@@ -119,7 +119,7 @@ class Booking extends Model
             'confirmed' => 'Confirmada',
             'completed' => 'Completada',
             'cancelled' => 'Cancelada',
-            default => 'Desconocido',
+            default => $this->status,
         };
     }
 }
