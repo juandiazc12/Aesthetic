@@ -1,105 +1,391 @@
-<div class="bg-white rounded-top shadow-sm mb-4 rounded-bottom">
-
-    <div class="row g-0">
-        <div class="col col-lg-7 mt-6 p-4">
-
-            <h2 class="text-body-emphasis fw-light">
-                Hello, It’s Great to See You!
-            </h2>
-
-            <p class="text-balance">
-                It is a fascinating project, and it’s easy enough to use that you might wish to dive right in.
-                You are minutes away from creativity than ever before. Enjoy!
-            </p>
-        </div>
-        <div class="d-none d-lg-block col align-self-center text-end text-muted p-4 opacity-25">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" role="img" width="6em" height="100%" viewBox="0 0 100 100">
-                <path d="M86.55 30.73c-11.33 10.72-27.5 12.65-42.3 14.43-10.94 1.5-23.3 3.78-30.48 13.04-6.2 8.3-4.25 20.3 2.25 27.8 1.35 2.03 5.7 5.7 6.38 5.3-5.96-8.42-5.88-21.6 2.6-28.4 8.97-7.52 21.2-7.1 32.03-9.7 6.47-1.23 13.3-3.5 19.2-5.34-8.3 7.44-19.38 10.36-29.7 13.75-8.7 3.08-17.22 10.23-17.45 20.1-.17 6.8 3.1 14.9 10.06 17.07 18.56 4.34 39.14-3.16 50.56-18.4 12.7-16.12 13.75-40.2 2.43-57.33-1.33 2.9-3.28 5.5-5.58 7.7z"/>
-                <path d="M0 49.97c-.14 4.35 1.24 13.9 2.63 14.64 1.2-11.48 10.2-20.74 20.83-24.47 17.9-7.06 38.75-3.1 55.66-13.18 5.16-2.3 9.28-9.48 4.36-14.1-2.16-1.76-5.9-5.75-3.7-.72.83 6.22-5.47 10.06-10.63 11.65-10.9 3.34-22.46 3-33.62 4.93-1.9.32-5.9 1.2-2.07-.6 10.52-5.02 23.57-4.38 32.6-12.5 4.8-3.75 2.77-11.16-2.4-13.4C57.4-.35 50.3-.35 43.63.35c-19.85 2.3-37.3 17.7-42.05 37.1C.52 41.57 0 45.77 0 49.97z"/>
-            </svg>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Centro de Estética Aesthetic</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #ffffff;
+            color: #333333;
+            line-height: 1.6;
+        }
+        
+        .header-bar {
+            background: #f8f9fa;
+            padding: 20px 40px;
+            border-bottom: 1px solid #e9ecef;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .header-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #e9ecef;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 16px;
+        }
+        
+        .header-icon:hover {
+            background: #dee2e6;
+            transform: scale(1.1);
+        }
+        
+        .content-area {
+            padding: 40px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .welcome-section {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 16px;
+            padding: 50px;
+            margin-bottom: 50px;
+            border: 1px solid #e9ecef;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .welcome-section::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(0, 122, 204, 0.1) 0%, transparent 70%);
+            animation: float 8s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(180deg); }
+        }
+        
+        .welcome-title {
+            color: #007acc;
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .welcome-subtitle {
+            color: #6c757d;
+            font-size: 18px;
+            line-height: 1.8;
+            max-width: 800px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 30px;
+            margin-top: 20px;
+        }
+        
+        .feature-card {
+            background: #ffffff;
+            border: 1px solid #e9ecef;
+            border-radius: 16px;
+            padding: 35px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+            border-color: #007acc;
+        }
+        
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #007acc, #0056b3);
+            transform: scaleX(0);
+            transition: transform 0.3s ease;
+        }
+        
+        .feature-card:hover::before {
+            transform: scaleX(1);
+        }
+        
+        .feature-icon {
+            width: 60px;
+            height: 60px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            margin-bottom: 25px;
+            border: 2px solid #e9ecef;
+            transition: all 0.3s ease;
+        }
+        
+        .feature-card:hover .feature-icon {
+            background: #007acc;
+            border-color: #007acc;
+            color: white;
+            transform: scale(1.1);
+        }
+        
+        .feature-title {
+            color: #333333;
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 18px;
+            transition: color 0.3s ease;
+        }
+        
+        .feature-card:hover .feature-title {
+            color: #007acc;
+        }
+        
+        .feature-description {
+            color: #6c757d;
+            font-size: 15px;
+            line-height: 1.7;
+        }
+        
+        .stats-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+        
+        .stat-card {
+            background: #ffffff;
+            border: 1px solid #e9ecef;
+            border-radius: 12px;
+            padding: 25px;
+            text-align: center;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+        }
+        
+        .stat-number {
+            font-size: 28px;
+            font-weight: 700;
+            color: #007acc;
+            margin-bottom: 8px;
+        }
+        
+        .stat-label {
+            color: #6c757d;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 40px;
+        }
+        
+        .action-btn {
+            background: #007acc;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .action-btn:hover {
+            background: #0056b3;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 122, 204, 0.3);
+        }
+        
+        .action-btn.secondary {
+            background: #6c757d;
+        }
+        
+        .action-btn.secondary:hover {
+            background: #5a6268;
+        }
+        
+        @media (max-width: 768px) {
+            .content-area {
+                padding: 20px;
+            }
+            
+            .welcome-section {
+                padding: 30px 20px;
+            }
+            
+            .welcome-title {
+                font-size: 24px;
+            }
+            
+            .welcome-subtitle {
+                font-size: 16px;
+            }
+            
+            .features-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .feature-card {
+                padding: 25px;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header-bar">
+        <div></div>
+        <div class="header-actions">
+            <div class="header-icon">⚙️</div>
+            <div class="header-icon">🔔</div>
+            <div class="header-icon">👤</div>
         </div>
     </div>
-
-    <div class="row bg-light m-0 p-md-4 p-3 border-top rounded-bottom g-md-5 text-balance">
-
-        <div class="col-md-6 my-2">
-            <h3 class="text-muted fw-light d-flex align-items-center gap-3">
-                <x-orchid-icon path="bs.book"/>
-
-                <span class="text-body-emphasis lh-1">Explore the Documentation</span>
-            </h3>
-            <p class="ms-md-5 ps-md-1">
-                Ready to unleash your coding potential? Our platform built on the Laravel framework is user-friendly and
-                perfect for developers of all levels to create innovative solutions. Dive in and experience the power of
-                limitless creativity with our comprehensive <a href="https://orchid.software/en/docs" target="_blank" class="text-u-l">documentation</a>.
+    
+    <div class="content-area">
+        <div class="welcome-section">
+            <h1 class="welcome-title">¡Bienvenido a tu Centro de Estética Aesthetic!</h1>
+            <p class="welcome-subtitle">
+                Administra tu centro de belleza con facilidad y elegancia. Gestiona citas, servicios y 
+                clientes desde un solo lugar. Tu camino hacia la excelencia en belleza comienza aquí.
             </p>
-        </div>
-
-        <div class="col-md-6 my-2">
-            <h3 class="text-muted fw-light d-flex align-items-center gap-3">
-                <x-orchid-icon path="bs.rocket"/>
-
-                <span class="text-body-emphasis lh-1">Quick Start Guide</span>
-            </h3>
-            <p class="ms-md-5 ps-md-1">
-                Are you entirely new to Laravel Orchid? Don't worry, we all were once. For a quick study of the main
-                features, be sure to <a href="https://orchid.software/en/docs/quickstart" target="_blank" class="text-u-l">check out the step-by-step tutorials</a> see on the site.
-            </p>
-        </div>
-
-        <div class="col-md-6 my-2">
-            <h3 class="text-muted fw-light d-flex align-items-center gap-3">
-                <x-orchid-icon path="bs.collection"/>
-
-                <span class="text-body-emphasis lh-1">The Screens</span>
-            </h3>
-            <p class="ms-md-5 ps-md-1">
-                Screen design is hierarchical and declarative, rather than physical and imperative. You specify what
-                data should be displayed, how the controls manage that data are to be configured. Experience the power
-                of a declarative design approach with our platform.
-            </p>
-        </div>
-
-        <div class="col-md-6 my-2">
-            <h3 class="text-muted fw-light d-flex align-items-center gap-3">
-                <x-orchid-icon path="bs.window-sidebar"/>
-
-                <span class="text-body-emphasis lh-1">Layouts</span>
-            </h3>
-            <p class="ms-md-5 ps-md-1">
-                It allows you to express many details so that the user interface can be interpreted and generated
-                automatically. But unlike various other tools that do this, the developer can also customize it with
-                custom templates. Create visually stunning and unique layouts with our system.
-            </p>
-        </div>
-
-        <div class="col-md-6 my-2">
-            <h3 class="text-muted fw-light d-flex align-items-center gap-3">
-                <x-orchid-icon path="bs.star"/>
-
-                <span class="text-body-emphasis lh-1">And one more thing</span>
-            </h3>
-            <p class="ms-md-5 ps-md-1">
-                Laravel Orchid offers a wide range of features to enhance your user interface and improve data
-                management. Control entire screens or behaviors based on security permissions, easily filter data for
-                users, and utilize one-time and personal notifications to keep users informed. The possibilities are
-                endless with our platform, discover all it has to offer and take your development to the next level.
-            </p>
-        </div>
-
-        <div class="col-md-6 my-2">
-            <h3 class="text-muted fw-light d-flex align-items-center gap-3">
-                <x-orchid-icon path="bs.life-preserver"/>
-
-                <span class="text-body-emphasis lh-1">Connect with the Community</span>
-            </h3>
-            <div class="ms-md-5 ps-md-1">
-                <p>
-                    Connect with the Laravel Orchid community by following <a href="https://twitter.com/orchid_platform" class="text-u-l">@orchid_platform</a> on Twitter and joining the
-                    official <a href="https://t.me/orchid_community" class="text-u-l">Telegram group</a> for updates, news, and support from the community. Stay informed and be a
-                    part of the development process.
+        </div>     
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon">📅</div>
+                <h3 class="feature-title">Gestión de Citas</h3>
+                <p class="feature-description">
+                    Administra fácilmente las citas de tus clientes. Programa, reprograma y cancela citas con unos 
+                    pocos clics. Visualiza tu agenda diaria, semanal o mensual para optimizar tu tiempo y recursos.
                 </p>
             </div>
-        </div>
-    </div>
-</div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">👥</div>
+                <h3 class="feature-title">Gestión de Clientes</h3>
+                <p class="feature-description">
+                    Mantén un registro detallado de tus clientes. Historial de tratamientos, preferencias personales y 
+                    datos de contacto siempre a tu alcance para ofrecer un servicio personalizado y de calidad.
+                </p>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">✨</div>
+                <h3 class="feature-title">Catálogo de Servicios</h3>
+                <p class="feature-description">
+                    Gestiona tu catálogo de servicios de belleza y estética. Actualiza precios, duración y descripción de 
+                    cada servicio. Organiza por categorías para facilitar la búsqueda y reserva por parte de tus clientes.
+                </p>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">📊</div>
+                <h3 class="feature-title">Estadísticas y Reportes</h3>
+                <p class="feature-description">
+                    Analiza el rendimiento de tu centro de estética con informes detallados. Visualiza los servicios más solicitados, 
+                    ingresos por período y fidelización de clientes para tomar decisiones estratégicas basadas en datos reales.
+                </p>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">🔔</div>
+                <h3 class="feature-title">Recordatorios Automáticos</h3>
+                <p class="feature-description">
+                    Reduce las insistencias con recordatorios automáticos de citas. Envía notificaciones a tus clientes para 
+                    confirmar su asistencia y mantenlos informados sobre promociones especiales y nuevos servicios.
+                </p>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">⚙️</div>
+                <h3 class="feature-title">Configuración Personalizada</h3>
+                <p class="feature-description">
+                    Adapta el sistema a las necesidades específicas de tu centro de estética. Configura horarios de atención, días 
+                    festivos, profesionales disponibles y mucho más para que la plataforma funcione exactamente como necesitas.
+                </p>
+            </div>
+        </div>     
+    <script>
+        // Efectos hover para tarjetas
+        document.querySelectorAll('.feature-card').forEach(card => {
+            card.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-8px)';
+            });
+            
+            card.addEventListener('mouseleave', function() {
+                this.style.transform = 'translateY(0)';
+            });
+        });
+        
+        // Efectos para botones de acción
+        document.querySelectorAll('.action-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                this.style.transform = 'scale(0.95)';
+                setTimeout(() => {
+                    this.style.transform = 'translateY(-2px)';
+                }, 150);
+            });
+        });
+        
+        // Animación para las estadísticas
+        document.querySelectorAll('.stat-card').forEach((card, index) => {
+            card.style.animationDelay = `${index * 0.1}s`;
+        });
+    </script>
+</body>
+</html>
