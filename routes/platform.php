@@ -83,3 +83,4 @@ Route::get('/calendar/events', [DashboardScreen::class, 'getCalendarEvents'])->n
 Route::post('dashboard/cancel/{booking}', [DashboardScreen::class, 'cancelBooking'])->name('platform.dashboard.cancel');
 
 Route::screen('/bookings/{booking}/edit', \App\Orchid\Screens\BookingEditScreen::class)->name('platform.bookings.edit');
+Route::post('dashboard/filter', [DashboardScreen::class, 'applyFilter'])->name('platform.dashboard.filter');

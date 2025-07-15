@@ -287,16 +287,7 @@
         }
     </style>
 </head>
-<body>
-    <div class="header-bar">
-        <div></div>
-        <div class="header-actions">
-            <div class="header-icon">⚙️</div>
-            <div class="header-icon">🔔</div>
-            <div class="header-icon">👤</div>
-        </div>
-    </div>
-    
+<body>    
     <div class="content-area">
         <div class="welcome-section">
             <h1 class="welcome-title">¡Bienvenido a tu Centro de Estética Aesthetic!</h1>
