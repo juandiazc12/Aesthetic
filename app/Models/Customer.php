@@ -4,12 +4,13 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User;
+use Illuminate\Notifications\Notifiable;
 
 
 class Customer extends User
 {
 
-    use HasFactory;
+    use HasFactory, Notifiable;
 
     protected $fillable = [
         'first_name',
