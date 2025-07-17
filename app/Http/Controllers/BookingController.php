@@ -401,40 +401,44 @@ class BookingController extends Controller
         }
 
         public function list()
-        {
-            $bookings = Booking::with(['service', 'professional'])
-                ->where('customer_id', Auth::guard('customer')->id())
-                ->orderBy('scheduled_at', 'desc')
-                ->get()
-                ->map(function ($booking) {
-                    return [
-                        'id' => $booking->id,
-                        'service' => [
-                            'name' => $booking->service->name,
-                            'duration' => $booking->service->duration,
-                        ],
-                        'professional' => [
-                            'name' => $booking->professional->name,
-                            'photo' => $booking->professional->photo,
-                        ],
-                        'scheduled_at' => Carbon::parse($booking->scheduled_at, 'America/Bogota'),
-                        'scheduled_date' => Carbon::parse($booking->scheduled_at, 'America/Bogota')->format('d/m/Y'),
-                        'scheduled_time' => Carbon::parse($booking->scheduled_at, 'America/Bogota')->format('H:i'),
-                        'scheduled_day' => $this->getDayNameInSpanish(Carbon::parse($booking->scheduled_at, 'America/Bogota')->format('l')),
-                        'total_amount' => $booking->total_amount,
-                        'payment_method' => $booking->payment_method,
-                        'payment_status' => $booking->payment_status,
-                        'status' => $booking->status,
-                        'status_spanish' => $booking->statusSpanish,
-                        'created_at' => Carbon::parse($booking->created_at, 'America/Bogota'),
-                        'completed_at' => $booking->completed_at ? Carbon::parse($booking->completed_at, 'America/Bogota') : null,
-                    ];
-                });
+{
+    $bookings = Booking::with(['service', 'professional'])
+        ->where('customer_id', Auth::guard('customer')->id())
+        ->orderBy('scheduled_at', 'desc')
+        ->get()
+        ->map(function ($booking) {
+            return [
+                'id' => $booking->id,
+                'service' => [
+                    'name' => $booking->service->name,
+                    'duration' => $booking->service->duration,
+                    'image' => $booking->service->image, // Agregar imagen del servicio
+                ],
+                'professional' => [
+                    'name' => $booking->professional->name,
+                    'email' => $booking->professional->email, // Agregar email del profesional
+                    'photo' => $booking->professional->photo,
+                ],
+                'scheduled_at' => Carbon::parse($booking->scheduled_at, 'America/Bogota')->format('Y-m-d H:i:s'),
+                'scheduled_date' => Carbon::parse($booking->scheduled_at, 'America/Bogota')->format('d/m/Y'),
+                'scheduled_time' => Carbon::parse($booking->scheduled_at, 'America/Bogota')->format('H:i'),
+                'scheduled_day' => $this->getDayNameInSpanish(Carbon::parse($booking->scheduled_at, 'America/Bogota')->format('l')),
+                'total_amount' => $booking->total_amount,
+                'payment_method' => $booking->payment_method,
+                'payment_status' => $booking->payment_status,
+                'status' => $booking->status,
+                'status_spanish' => $booking->statusSpanish,
+                'created_at' => Carbon::parse($booking->created_at, 'America/Bogota')->format('Y-m-d H:i:s'),
+                'completed_at' => $booking->completed_at ? Carbon::parse($booking->completed_at, 'America/Bogota')->format('Y-m-d H:i:s') : null,
+            ];
+        });
 
-            return Inertia::render('Booking/BookingList', [
-                'bookings' => $bookings
-            ]);
-        }
+    return Inertia::render('Booking/BookingList', [ // Cambiar a BookingList con B mayúscula
+        'bookings' => $bookings,
+        'customer' => Auth::guard('customer')->user(), // Agregar customer si lo necesitas
+        'professionals' => [] 
+    ]);
+}
 
         public function destroy($id)
         {
