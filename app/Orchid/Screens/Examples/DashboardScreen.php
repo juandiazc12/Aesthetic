@@ -229,7 +229,7 @@ class DashboardScreen extends Screen
                 $professionalId = $request->input('professional_id');
                 // Si professional_id es vacío o null, no filtramos por profesional
                 if ($professionalId === '' || $professionalId === null) {
-                    $professionalId = null;
+                    $professionalId = "hola";
                 }
             } else {
                 $professionalId = $user ? $user->id : null;

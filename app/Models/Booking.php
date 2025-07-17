@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Carbon\Carbon;
 
 class Booking extends Model
 {
@@ -40,6 +41,12 @@ class Booking extends Model
     public function service()
     {
         return $this->belongsTo(Service::class);
+    }
+
+     // Accessor para mostrar la fecha en zona horaria de Colombia
+    public function getScheduledAtBogotaAttribute()
+    {
+        return $this->scheduled_at ? Carbon::parse($this->scheduled_at)->setTimezone('America/Bogota') : null;
     }
 
     // Relación con el profesional
