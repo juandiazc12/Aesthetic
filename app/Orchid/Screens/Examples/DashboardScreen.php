@@ -26,11 +26,7 @@ class DashboardScreen extends Screen
         // Para admin: si no se especifica professional_id, mostramos todas las citas
         // Para profesional: siempre mostramos solo sus citas
         if ($isAdmin) {
-            $professionalId = $request->input('professional_id');
-            // Si professional_id es vacío o null, no filtramos por profesional
-            if ($professionalId === '' || $professionalId === null) {
-                $professionalId = null;
-            }
+            $professionalId = null; // Admin nunca filtra por profesional
         } else {
             $professionalId = $user ? $user->id : null;
         }
@@ -44,54 +40,35 @@ class DashboardScreen extends Screen
         }
         $pendingBookingsCount = $pendingBookingsQuery->count();
 
-        // Metrics query: Para admin mostramos todas las citas si no hay filtro
-        $query = Booking::whereNotIn('status', ['cancelled', 'completed']);
-        if ($professionalId) {
-            $query->where('professional_id', $professionalId);
-        }
+        // Total de citas (todas las que no están canceladas ni completadas)
+        $totalBookings = Booking::whereNotIn('status', ['cancelled', 'completed'])->count();
 
-        $totalBookings = $query->count();
-        $bookingsToday = $query->whereDate('scheduled_at', Carbon::today('America/Bogota'))->count();
+        // Citas de hoy
+        $bookingsToday = Booking::whereNotIn('status', ['cancelled', 'completed'])
+            ->whereDate('scheduled_at', Carbon::today('America/Bogota'))
+            ->count();
 
-        // Monthly revenue calculation
-        $monthlyRevenueQuery = Booking::where('payment_status', 'paid')
-            ->whereMonth('payment_completed_at', Carbon::now('America/Bogota')->month);
-        
-        if ($professionalId) {
-            $monthlyRevenueQuery->where('professional_id', $professionalId);
-        }
-        
-        $monthlyRevenue = $monthlyRevenueQuery->sum('total_amount');
+        // Ingresos mensuales
+        $monthlyRevenue = Booking::where('payment_status', 'paid')
+            ->whereMonth('payment_completed_at', Carbon::now('America/Bogota')->month)
+            ->sum('total_amount');
 
-        // Service ranking
-        $serviceRankingQuery = Booking::select('service_id')
-            ->whereNotIn('status', ['cancelled', 'completed']);
-        
-        if ($professionalId) {
-            $serviceRankingQuery->where('professional_id', $professionalId);
-        }
-        
-        $serviceRanking = $serviceRankingQuery
+        // Ranking de servicios
+        $serviceRanking = Booking::select('service_id')
+            ->whereNotIn('status', ['cancelled', 'completed'])
             ->groupBy('service_id')
             ->orderByRaw('COUNT(*) DESC')
             ->take(5)
             ->with('service')
             ->get()
-            ->map(function ($booking) use ($professionalId) {
-                $countQuery = Booking::where('service_id', $booking->service_id)
-                    ->whereNotIn('status', ['cancelled', 'completed']);
-                
-                if ($professionalId) {
-                    $countQuery->where('professional_id', $professionalId);
-                }
-                
-                $result = [
+            ->map(function ($booking) {
+                $count = Booking::where('service_id', $booking->service_id)
+                    ->whereNotIn('status', ['cancelled', 'completed'])
+                    ->count();
+                return [
                     'service_name' => is_object($booking->service) ? $booking->service->name : 'Sin servicio',
-                    'count' => $countQuery->count(),
+                    'count' => $count,
                 ];
-                
-                Log::debug('Service ranking item', $result);
-                return $result;
             })->toArray();
 
         // Get professionals list for admin filter
@@ -100,20 +77,34 @@ class DashboardScreen extends Screen
             ->toArray() : [];
 
         $selectedDate = $request->input('selected_date', Carbon::today('America/Bogota')->format('Y-m-d'));
-        
-        // Daily bookings
+
+        // Citas del día seleccionado
+        // Filtrado por rango de fecha en zona horaria Bogota (convertido a UTC)
+        $start = Carbon::parse($selectedDate . ' 00:00:00', 'America/Bogota')->setTimezone('UTC');
+        $end = Carbon::parse($selectedDate . ' 23:59:59', 'America/Bogota')->setTimezone('UTC');
         $dailyBookingsQuery = Booking::whereNotIn('status', ['cancelled', 'completed'])
-            ->whereDate('scheduled_at', $selectedDate);
-        
-        if ($professionalId) {
+            ->whereBetween('scheduled_at', [$start, $end]);
+        // Solo filtra por profesional si NO es admin
+        if (!$isAdmin && $professionalId) {
             $dailyBookingsQuery->where('professional_id', $professionalId);
         }
-        
-        $dailyBookings = $dailyBookingsQuery
+        // Logging temporal para depuración
+        \Log::debug('DASHBOARD ADMIN - Rango de búsqueda', [
+            'selectedDate' => $selectedDate,
+            'start_utc' => $start->toDateTimeString(),
+            'end_utc' => $end->toDateTimeString(),
+        ]);
+        $dailyBookingsRaw = $dailyBookingsQuery
             ->with(['service', 'professional', 'customer'])
-            ->get()
+            ->get();
+        \Log::debug('DASHBOARD ADMIN - Bookings encontrados', [
+            'count' => $dailyBookingsRaw->count(),
+            'ids' => $dailyBookingsRaw->pluck('id')->toArray(),
+            'fechas' => $dailyBookingsRaw->pluck('scheduled_at')->toArray(),
+        ]);
+        $dailyBookings = $dailyBookingsRaw
             ->map(function ($booking) {
-                $result = [
+                return [
                     'id' => $booking->id,
                     'service' => is_object($booking->service) ? $booking->service->name : 'Sin servicio',
                     'professional' => is_object($booking->professional) ? $booking->professional->name : 'Sin profesional',
@@ -125,9 +116,6 @@ class DashboardScreen extends Screen
                     'total_amount' => $booking->total_amount !== null ? 
                         number_format((float)$booking->total_amount, 0) : '0',
                 ];
-                
-                Log::debug('Daily booking item', $result);
-                return $result;
             })->toArray();
 
         return [
@@ -181,21 +169,7 @@ class DashboardScreen extends Screen
             ]),
         ];
 
-        // Add filter only for admin users
-        if ($queryData['is_admin']) {
-            $layouts[] = Layout::rows([
-                Select::make('professional_id')
-                    ->options(['' => 'Todos los Profesionales'] + $queryData['professionals'])
-                    ->title('Filtrar por Profesional')
-                    ->value($queryData['professional_id'] ?? '')
-                    ->help('Selecciona un profesional específico o deja vacío para ver todas las citas'),
-                
-                Button::make('Aplicar Filtro')
-                    ->icon('bs.funnel')
-                    ->method('applyFilter')
-                    ->class('btn btn-primary mt-2'),
-            ])->title('Filtros de Administrador');
-        }
+
 
         $layouts[] = Layout::view('calendar');
 
@@ -223,31 +197,35 @@ class DashboardScreen extends Screen
             $user = auth()->user();
             $isAdmin = $user && method_exists($user, 'hasAnyRole') && $user->hasAnyRole(['admin']);
             
+            // Filtros recibidos por request
+            $filterProfessionalId = $request->input('calendar_professional_id');
+            $filterStatus = $request->input('calendar_status'); // 'pending', 'active', 'completed', 'cancelled', 'all'
+
             // Para admin: si no se especifica professional_id, mostramos todas las citas
             // Para profesional: siempre mostramos solo sus citas
             if ($isAdmin) {
-                $professionalId = $request->input('professional_id');
-                // Si professional_id es vacío o null, no filtramos por profesional
-                if ($professionalId === '' || $professionalId === null) {
-                    $professionalId = "hola";
-                }
+                $professionalId = null; // Admin nunca filtra por profesional
             } else {
                 $professionalId = $user ? $user->id : null;
             }
 
             $bookingsQuery = Booking::with(['service', 'professional', 'customer']);
-            
-            // Para admin mostramos todas las citas (incluyendo canceladas/completadas)
-            // Para profesional mostramos solo las no canceladas/completadas
-            if (!$isAdmin) {
-                $bookingsQuery->whereNotIn('status', ['cancelled', 'completed']);
-            }
-            
-            // Aplicar filtro por profesional si es necesario
-            if ($professionalId) {
+
+            // Filtro por profesional (admin puede ver todos o uno)
+            if ($isAdmin && $filterProfessionalId && $filterProfessionalId !== 'all') {
+                $bookingsQuery->where('professional_id', $filterProfessionalId);
+            } elseif (!$isAdmin && $professionalId) {
                 $bookingsQuery->where('professional_id', $professionalId);
             }
-            
+
+            // Filtro por estado
+            if ($filterStatus && $filterStatus !== 'all') {
+                $bookingsQuery->where('status', $filterStatus);
+            } else {
+                // Por default, solo mostrar activas o pendientes
+                $bookingsQuery->whereNotIn('status', ['cancelled', 'completed']);
+            }
+
             $bookings = $bookingsQuery->get();
 
             $events = $bookings->map(function ($booking) use ($isAdmin) {
@@ -317,10 +295,7 @@ class DashboardScreen extends Screen
             $params['selected_date'] = $request->input('selected_date');
         }
         
-        // Agregar el filtro de profesional
-        if ($request->has('professional_id')) {
-            $params['professional_id'] = $request->input('professional_id');
-        }
+
         
         Log::info('Apply filter called', $params);
         
@@ -329,8 +304,8 @@ class DashboardScreen extends Screen
 
     public function refresh(Request $request)
     {
-        Log::info('Refresh called', $request->only(['professional_id', 'selected_date']));
+        Log::info('Refresh called', $request->only(['selected_date']));
         
-        return redirect()->route('platform.dashboard', $request->only(['professional_id', 'selected_date']));
+        return redirect()->route('platform.dashboard', $request->only(['selected_date']));
     }
 }
