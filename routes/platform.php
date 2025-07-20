@@ -79,8 +79,10 @@ Route::screen('dasboard', DashboardScreen::class)
 
 Route::screen('/examples/cards', ExampleCardsScreen::class)->name('platform.example.cards');
 
+
+
+Route::post('dashboard/{booking}/status', [DashboardScreen::class, 'updateBookingStatus'])->name('platform.dashboard.update-status');
 Route::get('/calendar/events', [DashboardScreen::class, 'getCalendarEvents'])->name('platform.calendar.events');
 Route::post('dashboard/cancel/{booking}', [DashboardScreen::class, 'cancelBooking'])->name('platform.dashboard.cancel');
-
-Route::screen('/bookings/{booking}/edit', \App\Orchid\Screens\BookingEditScreen::class)->name('platform.bookings.edit');
 Route::post('dashboard/filter', [DashboardScreen::class, 'applyFilter'])->name('platform.dashboard.filter');
+Route::screen('/bookings/{booking}/edit', \App\Orchid\Screens\BookingEditScreen::class)->name('platform.bookings.edit');
