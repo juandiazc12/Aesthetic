@@ -47,7 +47,7 @@ class BookingConfirmation extends Notification implements ShouldQueue
     public function toMail($notifiable)
     {
         $scheduledAt = Carbon::parse($this->booking->scheduled_at);
-        $endTime = $scheduledAt->copy()->addMinutes($this->booking->service->duration);
+        $endTime = $scheduledAt->copy()->addMinutes((int) $this->booking->service->duration);
         
         // Crear el evento de calendario
         $icsContent = $this->generateIcsContent($scheduledAt, $endTime);
