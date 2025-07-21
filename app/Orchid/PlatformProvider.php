@@ -35,10 +35,6 @@ class PlatformProvider extends OrchidServiceProvider
                     return $query->count();
                 }),
 
-            Menu::make('Cards')
-                ->icon('bs.card-text')
-                ->route('platform.example.cards')
-                ->divider(),
 
             Menu::make(__('Usuarios'))
                 ->icon('bs.people')
