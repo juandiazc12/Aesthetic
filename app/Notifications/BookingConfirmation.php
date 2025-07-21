@@ -53,20 +53,14 @@ class BookingConfirmation extends Notification implements ShouldQueue
         $icsContent = $this->generateIcsContent($scheduledAt, $endTime);
         
         return (new MailMessage)
-            ->subject('Confirmación de tu cita en Aesthectic')
-            ->greeting('¡Hola ' . $notifiable->first_name . '!')
-            ->line('Tu cita ha sido confirmada con éxito.')
-            ->line('Detalles de la cita:')
-            ->line('Servicio: ' . $this->booking->service->name)
-            ->line('Fecha: ' . $scheduledAt->format('d/m/Y'))
-            ->line('Hora: ' . $scheduledAt->format('h:i A'))
-            ->line('Duración: ' . $this->booking->service->duration . ' minutos')
-            ->line('Profesional: ' . $this->booking->professional->name)
-            ->action('Ver detalles de la cita', URL::route('booking.confirmation', ['booking' => $this->booking->id]))
-            ->line('Gracias por confiar en nosotros.')
-            ->attachData($icsContent, 'cita.ics', [
-                'mime' => 'text/calendar',
-            ]);
+    ->subject('Confirmación de tu cita en Aesthectic')
+    ->markdown('emails.booking-confirmation', [
+        'booking' => $this->booking,
+        'notifiable' => $notifiable,
+    ])
+    ->attachData($icsContent, 'cita.ics', [
+        'mime' => 'text/calendar',
+    ]);
     }
 
     /**
