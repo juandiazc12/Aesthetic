@@ -12,6 +12,7 @@ use App\Orchid\Screens\User\UserProfileScreen;
 use App\Orchid\Screens\ServiceListScreen;
 use Illuminate\Support\Facades\Route;
 use Tabuna\Breadcrumbs\Trail;
+use App\Orchid\Screens\BookingEditScreen;
 
 Route::screen('/main', PlatformScreen::class)
     ->name('platform.main');
@@ -70,19 +71,32 @@ Route::screen('services/{service_list}/edit', ServiceListScreen::class)
         ->parent('platform.services')
         ->push($service_list->name, route('platform.services.edit', $service_list)));
 
-Route::screen('dasboard', DashboardScreen::class)
+Route::screen('dashboard', DashboardScreen::class)
     ->name('platform.dashboard')
     ->breadcrumbs(fn (Trail $trail) => $trail
         ->parent('platform.index')
         ->push('Dashboard'));
 
+Route::screen('/examples/cards', ExampleCardsScreen::class)
+    ->name('platform.example.cards');
 
-Route::screen('/examples/cards', ExampleCardsScreen::class)->name('platform.example.cards');
+Route::get('/calendar/events', [DashboardScreen::class, 'getCalendarEvents'])
+    ->name('platform.calendar.events');
 
+Route::post('dashboard/filter', [DashboardScreen::class, 'applyFilter'])
+    ->name('platform.dashboard.filter');
 
+Route::get('/dashboard/daily-bookings', [DashboardScreen::class, 'getDailyBookings'])
+    ->name('platform.dashboard.daily-bookings');
 
-Route::post('dashboard/{booking}/status', [DashboardScreen::class, 'updateBookingStatus'])->name('platform.dashboard.update-status');
-Route::get('/calendar/events', [DashboardScreen::class, 'getCalendarEvents'])->name('platform.calendar.events');
-Route::post('dashboard/cancel/{booking}', [DashboardScreen::class, 'cancelBooking'])->name('platform.dashboard.cancel');
-Route::post('dashboard/filter', [DashboardScreen::class, 'applyFilter'])->name('platform.dashboard.filter');
-Route::screen('/bookings/{booking}/edit', \App\Orchid\Screens\BookingEditScreen::class)->name('platform.bookings.edit');
+Route::get('/dashboard/metrics-ranking', [DashboardScreen::class, 'getMetricsAndRanking'])
+    ->name('platform.dashboard.metrics-ranking');
+
+Route::screen('/bookings/{booking}/edit', BookingEditScreen::class)
+    ->name('platform.bookings.edit')
+    ->breadcrumbs(fn (Trail $trail, $booking) => $trail
+        ->parent('platform.dashboard')
+        ->push('Editar Cita', route('platform.bookings.edit', $booking)));
+
+Route::post('bookings/update-status/{booking}', [BookingEditScreen::class, 'updateBookingStatus'])
+    ->name('platform.bookings.update-status');

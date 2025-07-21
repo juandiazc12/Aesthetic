@@ -3,26 +3,49 @@ declare(strict_types=1);
 
 namespace App\Orchid\Screens;
 
-use App\Models\Booking; // Importar el modelo correcto
+use App\Models\Booking;
 use App\Models\Service;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Orchid\Screen\Actions\Button;
 use Orchid\Screen\Fields\DateTimer;
+use Orchid\Screen\Fields\Input;
 use Orchid\Screen\Fields\Select;
 use Orchid\Screen\Screen;
 use Orchid\Support\Facades\Layout;
 use Orchid\Support\Facades\Toast;
+use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
+use Illuminate\Http\JsonResponse;
+
 class BookingEditScreen extends Screen
 {
     public $booking;
 
-    public function query(Booking $booking): iterable
+    public function query(Booking $booking): array
     {
-        $booking->load(['service', 'professional', 'customer']);
+        $this->booking = $booking;
+
+        $scheduledAt = $booking->scheduled_at instanceof \Carbon\Carbon
+            ? Carbon::parse($booking->scheduled_at, 'America/Bogota')
+            : Carbon::now('America/Bogota');
+
         return [
-            'booking' => $booking,
+            'booking' => [
+                'id' => $booking->id,
+                'service_id' => $booking->service_id,
+                'professional_id' => $booking->professional_id,
+                'customer_id' => $booking->customer_id,
+                'scheduled_at' => $scheduledAt->format('Y-m-d H:i'),
+                'status' => $booking->status,
+                'total_amount' => $booking->total_amount !== null ? number_format((float)$booking->total_amount, 0) : '0',
+                'service_name' => is_object($booking->service) ? $booking->service->name : 'Sin servicio',
+                'professional_name' => is_object($booking->professional) ? $booking->professional->name : 'Sin profesional',
+                'customer_name' => is_object($booking->customer) ? ($booking->customer->first_name ?? $booking->customer->name ?? 'Sin nombre') : 'Sin cliente',
+                'duration' => is_object($booking->service) ? $booking->service->duration : null,
+                'canCancel' => $booking->status === 'pending' && $scheduledAt->gt(Carbon::now('America/Bogota')->addHour()),
+                'canComplete' => $booking->status === 'pending' && $scheduledAt->lte(Carbon::now('America/Bogota')),
+            ],
         ];
     }
 
@@ -31,93 +54,66 @@ class BookingEditScreen extends Screen
         return 'Editar Cita';
     }
 
-    public function permission(): ?iterable
+    public function description(): ?string
     {
-        return [
-            'platform.dashboard',
-        ];
+        return 'Detalles y gestión de la cita';
     }
 
     public function commandBar(): iterable
     {
         return [
-            Button::make('Guardar')
-                ->icon('bs.check-circle')
-                ->method('save'),
-            Button::make('Cancelar Cita')
-                ->icon('bs.trash3')
-                ->method('cancel')
-                ->canSee($this->booking->status !== 'cancelled'),
+            Button::make('Volver')
+                ->icon('bs.arrow-left')
+                ->method('goBack'),
         ];
     }
 
     public function layout(): iterable
     {
         return [
-            Layout::rows([
-                Select::make('booking.service_id')
-                    ->title('Servicio')
-                    ->options(Service::pluck('name', 'id')->toArray())
-                    ->required(),
-                Select::make('booking.professional_id')
-                    ->title('Profesional')
-                    ->options(User::whereHas('roles', fn($q) => $q->where('slug', 'profesional'))->pluck('name', 'id')->toArray())
-                    ->required(),
-                DateTimer::make('booking.scheduled_at')
-                    ->title('Fecha y Hora')
-                    ->format('Y-m-d H:i')
-                    ->required(),
-                Select::make('booking.status')
-                    ->title('Estado')
-                    ->options([
-                        'pending' => 'Pendiente',
-                        'confirmed' => 'Confirmada',
-                        'completed' => 'Completada',
-                        'cancelled' => 'Cancelada',
-                    ])
-                    ->required(),
-            ]),
+            Layout::view('booking-edit'),
         ];
     }
 
-    public function save(Booking $booking, Request $request)
+    public function updateBookingStatus(Booking $booking, Request $request): JsonResponse
     {
-        $request->validate([
-            'booking.service_id' => 'required|exists:services,id',
-            'booking.professional_id' => 'required|exists:users,id',
-            'booking.scheduled_at' => 'required|date|after:now',
-            'booking.status' => 'required|in:pending,confirmed,completed,cancelled',
-        ]);
+        try {
+            $status = $request->input('status');
 
-        $existingBooking = Booking::where('professional_id', $request->input('booking.professional_id'))
-            ->where('scheduled_at', $request->input('booking.scheduled_at'))
-            ->whereNotIn('status', ['cancelled'])
-            ->where('id', '!=', $booking->id)
-            ->first();
+            if (!in_array($status, ['cancelled', 'completed'])) {
+                return response()->json(['error' => 'Estado no válido.'], 400);
+            }
 
-        if ($existingBooking) {
-            Toast::error('El horario ya está ocupado.');
-            return redirect()->back();
+            if ($status === 'cancelled') {
+                $scheduledAt = Carbon::parse($booking->scheduled_at, 'America/Bogota');
+                if ($scheduledAt instanceof \Carbon\Carbon && Carbon::now('America/Bogota')->gte($scheduledAt->subHour())) {
+                    return response()->json(['error' => 'No se puede cancelar menos de 1 hora antes.'], 403);
+                }
+            }
+
+            if ($status === 'completed') {
+                $scheduledAt = Carbon::parse($booking->scheduled_at, 'America/Bogota');
+                if ($scheduledAt instanceof \Carbon\Carbon && Carbon::now('America/Bogota')->lt($scheduledAt)) {
+                    return response()->json(['error' => 'No se puede marcar como completada antes de la hora programada.'], 403);
+                }
+            }
+
+            $booking->update([
+                'status' => $status,
+                $status === 'cancelled' ? 'cancelled_at' : 'completed_at' => Carbon::now('America/Bogota'),
+            ]);
+
+            return response()->json(['success' => true, 'message' => 'Cita actualizada exitosamente.']);
+        } catch (\Exception $e) {
+            Log::error('Error in updateBookingStatus: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+            ]);
+            return response()->json(['error' => 'Error al actualizar la cita: ' . $e->getMessage()], 500);
         }
-
-        $booking->update($request->input('booking'));
-        Toast::info('Cita actualizada.');
-        return redirect()->route('platform.example');
     }
 
-    public function cancel(Booking $booking)
+    public function goBack()
     {
-        if (Carbon::now()->gte($booking->scheduled_at->subHour())) {
-            Toast::error('No se puede cancelar menos de 1 hora antes.');
-            return redirect()->back();
-        }
-
-        $booking->update([
-            'status' => 'cancelled',
-            'cancelled_at' => now(),
-        ]);
-
-        Toast::info('Cita cancelada.');
-        return redirect()->route('platform.example');
+        return redirect()->route('platform.dashboard');
     }
 }

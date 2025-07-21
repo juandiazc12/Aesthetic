@@ -1,94 +1,144 @@
 @push('styles')
     <style>
-        #calendar-wrapper {
-            background-color: #fff;
-            border-radius: 0.75rem;
-            padding: 1.5rem;
-            margin-bottom: 1.5rem;
-            max-width: 100%;
-            overflow-x: auto;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        .calendar-wrapper {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: calc(100vh - 4rem);
+            padding: 2rem;
+            background: linear-gradient(180deg, #f1f5f9, #e2e8f0);
+            font-family: 'Inter', 'Georgia', serif;
+        }
+
+        #calendar-container {
+            background: linear-gradient(145deg, #ffffff, #f9fafb);
+            border-radius: 1.25rem;
+            padding: 2.5rem;
+            max-width: 960px;
+            width: 100%;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15), inset 0 1px 3px rgba(255, 255, 255, 0.5);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        #calendar-container:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 10px 24px rgba(0, 0, 0, 0.2);
+        }
+
+        #calendar-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 6px;
+            background: linear-gradient(90deg, #3b82f6, #10b981);
         }
 
         .calendar-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 1rem;
-            padding: 0.75rem;
-            background-color: #f8f9fa;
-            border-radius: 0.5rem;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid #e2e8f0;
         }
 
         .calendar-title {
-            font-weight: 600;
-            color: #333;
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: #1e293b;
             margin: 0;
+            letter-spacing: -0.025em;
+            text-transform: uppercase;
         }
 
         .user-role {
-            font-size: 0.85rem;
-            color: #555;
+            font-size: 1rem;
+            color: #475569;
             font-weight: 500;
         }
 
-        .filter-container select {
-            width: 200px;
-            padding: 0.5rem;
-            border-radius: 0.3rem;
-            border: 1px solid #ccc;
-            margin-right: 10px;
+        .filter-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
         }
 
-        .filter-container .btn {
-            padding: 0.5rem 1rem;
+        .filter-container select {
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            border: 1px solid #d1d5db;
+            background: #fff;
+            font-size: 0.95rem;
+            color: #1e293b;
+            min-width: 200px;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .filter-container select:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+            outline: none;
         }
 
         #calendar {
-            max-height: 450px;
             font-size: 0.9rem;
+            color: #475569;
         }
 
         .fc {
-            font-size: 0.9rem;
-            font-family: 'Arial', sans-serif;
+            font-family: 'Inter', 'Georgia', serif;
         }
 
         .fc .fc-toolbar {
             flex-wrap: wrap;
-            margin-bottom: 1rem;
+            margin-bottom: 1.5rem;
         }
 
         .fc .fc-button {
-            padding: 0.4rem 0.8rem;
-            font-size: 0.85rem;
-            border-radius: 0.3rem;
-            background-color: #1976d2;
-            border-color: #1976d2;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            font-size: 0.95rem;
+            font-weight: 600;
+            background: linear-gradient(90deg, #4ade80, #22c55e);
+            border: none;
             color: #fff;
-            transition: background-color 0.2s;
+            transition: all 0.3s ease;
         }
 
         .fc .fc-button:hover {
-            background-color: #1565c0;
-;
+            background: linear-gradient(90deg, #22c55e, #16a34a);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .fc .fc-button.fc-button-primary {
+            background: linear-gradient(90deg, #3b82f6, #2563eb);
+        }
+
+        .fc .fc-button.fc-button-primary:hover {
+            background: linear-gradient(90deg, #2563eb, #1e40af);
         }
 
         .fc .fc-daygrid-day {
-            padding: 4px;
+            padding: 6px;
             transition: all 0.2s ease;
         }
 
         .fc .fc-daygrid-day:hover {
-            background-color: #f5f5f5;
+            background-color: #f1f5f9;
         }
 
         .fc .fc-daygrid-event {
-            font-size: 0.8rem;
-            padding: 4px 6px;
-            border-radius: 4px;
-            margin: 2px 4px;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            font-size: 0.85rem;
+            padding: 5px 8px;
+            border-radius: 6px;
+            margin: 3px 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -96,26 +146,22 @@
         }
 
         .fc-event-pending {
-            background-color: #ff9800;
-            border-color: #f57c00;
+            background: linear-gradient(90deg, #f59e0b, #d97706);
             color: #fff;
         }
 
         .fc-event-confirmed {
-            background-color: #2196f3;
-            border-color: #1976d2;
+            background: linear-gradient(90deg, #3b82f6, #2563eb);
             color: #fff;
         }
 
         .fc-event-completed {
-            background-color: #4caf50;
-            border-color: #388e3c;
+            background: linear-gradient(90deg, #4ade80, #22c55e);
             color: #fff;
         }
 
         .fc-event-cancelled {
-            background-color: #f44336;
-            border-color: #d32f2f;
+            background: linear-gradient(90deg, #f87171, #dc2626);
             color: #fff;
         }
 
@@ -127,26 +173,15 @@
             font-weight: 500;
         }
 
-        .cancel-btn {
-            margin-left: 8px;
-            color: #fff;
-            font-size: 0.9rem;
-            cursor: pointer;
-            transition: color 0.2s;
-        }
-
-        .cancel-btn:hover {
-            color: #ff1744;
-        }
-
         .fc-day-selected {
-            background-color: #bbdefb !important;
-            border: 3px solid #1976d2 !important;
-            border-radius: 4px;
+            background: #e0f2fe !important;
+            border: 3px solid #3b82f6 !important;
+            border-radius: 6px;
         }
 
         .modal {
             z-index: 1050;
+            background: rgba(0, 0, 0, 0.6);
         }
 
         .modal.hidden {
@@ -155,85 +190,257 @@
 
         .modal-content {
             max-width: 600px;
+            background: linear-gradient(145deg, #ffffff, #f9fafb);
+            border-radius: 1rem;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+            padding: 2rem;
+            position: relative;
+        }
+
+        .modal-content::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, #3b82f6, #10b981);
+        }
+
+        .modal-close {
+            font-size: 1.5rem;
+            color: #475569;
+            transition: color 0.3s ease;
+        }
+
+        .modal-close:hover {
+            color: #1e293b;
         }
 
         #event-details {
-            font-size: 0.9rem;
-            color: #333;
+            font-size: 1rem;
+            color: #475569;
+            line-height: 1.8;
+        }
+
+        #event-details p {
+            margin: 0.75rem 0;
+        }
+
+        #event-details p strong {
+            color: #1e293b;
+            font-weight: 600;
+        }
+
+        .modal .flex button {
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-size: 0.95rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+        }
+
+        #cancel-service-btn {
+            background: linear-gradient(90deg, #f87171, #dc2626);
+            color: #fff;
+        }
+
+        #cancel-service-btn:hover {
+            background: linear-gradient(90deg, #ef4444, #b91c1c);
+            transform: translateY(-2px);
+        }
+
+        #complete-service-btn {
+            background: linear-gradient(90deg, #4ade80, #22c55e);
+            color: #fff;
+        }
+
+        #complete-service-btn:hover {
+            background: linear-gradient(90deg, #22c55e, #16a34a);
+            transform: translateY(-2px);
+        }
+
+        .modal .flex button:disabled {
+            background: #d1d5db;
+            color: #6b7280;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .loading {
+            opacity: 0.5;
+            transition: opacity 0.3s;
         }
 
         @media (max-width: 768px) {
-            #calendar {
-                max-height: 350px;
-                font-size: 0.8rem;
+            .calendar-wrapper {
+                padding: 1.5rem;
             }
 
-            .fc .fc-button {
-                padding: 0.3rem 0.6rem;
-                font-size: 0.75rem;
-            }
-
-            .fc .fc-daygrid-event {
-                font-size: 0.7rem;
-                padding: 3px 5px;
+            #calendar-container {
+                padding: 1.5rem;
             }
 
             .calendar-header {
                 flex-direction: column;
-                gap: 0.5rem;
+                gap: 0.75rem;
+                align-items: flex-start;
             }
 
-            .modal-content {
-                width: 90%;
+            .calendar-title {
+                font-size: 1.5rem;
+            }
+
+            .filter-container {
+                flex-direction: column;
+                align-items: stretch;
             }
 
             .filter-container select {
                 width: 100%;
-                margin-bottom: 10px;
+                margin-bottom: 0.75rem;
             }
 
-            .filter-container .btn {
-                width: 100%;
+            .fc .fc-button {
+                padding: 0.4rem 0.8rem;
+                font-size: 0.85rem;
+            }
+
+            .fc .fc-daygrid-event {
+                font-size: 0.75rem;
+                padding: 4px 6px;
+            }
+
+            .modal-content {
+                width: 90%;
+                padding: 1.5rem;
+            }
+        }
+
+        @media (prefers-color-scheme: dark) {
+            .calendar-wrapper {
+                background: linear-gradient(180deg, #1e293b, #334155);
+            }
+
+            #calendar-container {
+                background: linear-gradient(145deg, #2d3748, #4b5563);
+                color: #f1f5f9;
+            }
+
+            #calendar-container::before {
+                background: linear-gradient(90deg, #60a5fa, #34d399);
+            }
+
+            .calendar-header {
+                border-bottom: 2px solid #4b5563;
+            }
+
+            .calendar-title {
+                color: #f1f5f9;
+            }
+
+            .user-role {
+                color: #d1d5db;
+            }
+
+            .filter-container select {
+                background: #374151;
+                color: #f1f5f9;
+                border-color: #4b5563;
+            }
+
+            .filter-container select:focus {
+                border-color: #60a5fa;
+                box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.3);
+            }
+
+            .fc .fc-daygrid-day:hover {
+                background-color: #4b5563;
+            }
+
+            .fc-day-selected {
+                background: #1e40af !important;
+                border-color: #60a5fa !important;
+            }
+
+            .modal-content {
+                background: linear-gradient(145deg, #2d3748, #4b5563);
+                color: #f1f5f9;
+            }
+
+            .modal-content::before {
+                background: linear-gradient(90deg, #60a5fa, #34d399);
+            }
+
+            #event-details {
+                color: #d1d5db;
+            }
+
+            #event-details p strong {
+                color: #e5e7eb;
+            }
+
+            .modal-close {
+                color: #d1d5db;
+            }
+
+            .modal-close:hover {
+                color: #f1f5f9;
             }
         }
     </style>
 @endpush
 
-<div id="calendar-wrapper">
-    <div class="calendar-header">
-        <h3 class="calendar-title">Calendario de Citas</h3>
-    </div>
+<div class="calendar-wrapper">
+    <div id="calendar-container">
+        <div class="calendar-header">
+            <h3 class="calendar-title">Calendario de Citas</h3>
+            <span class="user-role">Rol: {{ $role_name }}</span>
+        </div>
 
-    @if($is_admin)
         <div class="filter-container">
-            <form method="GET" action="{{ route('platform.dashboard') }}" id="calendar-filter-form">
+            @if($is_admin)
                 <select name="professional_id" id="calendar_professional_id">
                     <option value="">Todos los Profesionales</option>
                     @foreach($professionals as $id => $name)
                         <option value="{{ $id }}" {{ $professional_id == $id ? 'selected' : '' }}>{{ $name }}</option>
                     @endforeach
                 </select>
-                <select name="status" id="calendar_status">
-                    <option value="all" {{ $status == 'all' ? 'selected' : '' }}>Todos los Estados</option>
-                    <option value="pending" {{ $status == 'pending' ? 'selected' : '' }}>Pendiente</option>
-                    <option value="confirmed" {{ $status == 'confirmed' ? 'selected' : '' }}>Confirmada</option>
-                    <option value="completed" {{ $status == 'completed' ? 'selected' : '' }}>Completada</option>
-                    <option value="cancelled" {{ $status == 'cancelled' ? 'selected' : '' }}>Cancelada</option>
-                </select>
-            </form> 
+            @endif
+            <select name="status" id="calendar_status">
+                <option value="all" {{ $status == 'all' ? 'selected' : '' }}>Todos los Estados</option>
+                <option value="pending" {{ $status == 'pending' ? 'selected' : '' }}>Pendiente</option>
+                <option value="confirmed" {{ $status == 'confirmed' ? 'selected' : '' }}>Confirmada</option>
+                <option value="completed" {{ $status == 'completed' ? 'selected' : '' }}>Completada</option>
+                <option value="cancelled" {{ $status == 'cancelled' ? 'selected' : '' }}>Cancelada</option>
+            </select>
         </div>
-    @endif
-    <div id="calendar"></div>
+        <div id="calendar"></div>
 
-    <!-- Modal Banner -->
-    <div id="event-modal" class="modal hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full">
-        <div class="modal-content relative p-5 bg-white w-11/12 md:w-1/2 mx-auto mt-20 rounded shadow-lg">
-            <span class="modal-close absolute top-2 right-2 text-gray-600 cursor-pointer text-2xl">×</span>
-            <h3 class="text-lg font-semibold mb-4">Detalles del Servicio</h3>
-            <div id="event-details" class="mb-4"></div>
-            <div class="flex justify-end gap-2">
-                <button id="cancel-service-btn" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">Cancelar</button>
-                <button id="complete-service-btn" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">Completar</button>
+        <!-- Modal Banner -->
+        <div id="event-modal" class="modal hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full">
+            <div class="modal-content relative mx-auto mt-20 rounded">
+                <span class="modal-close absolute top-2 right-2 cursor-pointer text-2xl">×</span>
+                <h3 class="text-lg font-semibold mb-4">Detalles del Servicio</h3>
+                <div id="event-details" class="mb-4"></div>
+                <div class="flex justify-end gap-2">
+                    <button id="cancel-service-btn" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                        Cancelar
+                    </button>
+                    <button id="complete-service-btn" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                        </svg>
+                        Completar
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -292,7 +499,7 @@
                                 return response.json();
                             })
                             .then(data => {
-                                console.log('Datos recibidos:', data); // Depuración
+                                console.log('Datos recibidos:', data);
                                 if (data.error) {
                                     console.error('Error en la respuesta del servidor:', data.error);
                                     failureCallback(new Error(data.error));
@@ -306,14 +513,9 @@
                                 alert('No se pudieron cargar los eventos: ' + error.message);
                             });
                     },
-                    eventClick: function (info) {
-                        info.jsEvent.preventDefault();
-                        if (!info.jsEvent.target.classList.contains('cancel-btn')) {
-                            showEventModal(info.event);
-                        }
-                    },
                     eventContent: function (info) {
-                        var cancelBtn = info.event.extendedProps.canCancel 
+                        var cancelBtn = info.event.extendedProps.canCancel
+
                         return {
                             html: '<div>' + info.event.title + cancelBtn + '</div>'
                         };
@@ -342,6 +544,7 @@
                         }
                     },
                     dateClick: function (info) {
+                        console.log('Fecha seleccionada:', info.dateStr);
                         document.querySelectorAll('.fc-day-selected').forEach(function (el) {
                             el.classList.remove('fc-day-selected');
                         });
@@ -355,20 +558,13 @@
                         });
 
                         var newUrl = '{{ route("platform.dashboard") }}?' + urlParams.toString();
+                        window.history.pushState({}, '', newUrl);
                         window.location.href = newUrl;
                     },
                     height: 'auto',
                     aspectRatio: 1.5,
                     dayMaxEvents: 3,
                     moreLinkText: 'más'
-                });
-
-                calendarEl.addEventListener('click', function (e) {
-                    if (e.target.classList.contains('cancel-btn')) {
-                        if (confirm('¿Estás seguro de que quieres cancelar esta cita?')) {
-                            updateBookingStatus(e.target.dataset.id, 'cancelled');
-                        }
-                    }
                 });
 
                 calendar.render();
@@ -410,40 +606,6 @@
                 modal.classList.remove('hidden');
             }
 
-            function updateBookingStatus(bookingId, status) {
-                if (!bookingId) {
-                    alert('Error: ID de la cita no válido');
-                    return;
-                }
-                fetch('{{ route("platform.dashboard.update-status", ":booking") }}'.replace(':booking', bookingId), {
-                    method: 'POST',
-                    headers: {
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json'
-                    },
-                    body: JSON.stringify({ status: status })
-                })
-                    .then(response => {
-                        if (!response.ok) {
-                            throw new Error('HTTP error ' + response.status);
-                        }
-                        return response.json();
-                    })
-                    .then(data => {
-                        if (data.success) {
-                            alert(`Cita ${status === 'cancelled' ? 'cancelada' : 'completada'} exitosamente`);
-                            calendar.refetchEvents();
-                            closeModal();
-                        } else {
-                            alert('Error: ' + (data.error || 'No se pudo actualizar la cita'));
-                        }
-                    })
-                    .catch(error => {
-                        alert('Error: ' + error.message);
-                    });
-            }
-
             function closeModal() {
                 var modal = document.getElementById('event-modal');
                 modal.classList.add('hidden');
@@ -459,32 +621,85 @@
                 var statusSelect = document.getElementById('calendar_status');
 
                 closeBtn.addEventListener('click', closeModal);
-                cancelBtn.addEventListener('click', function () {
-                    if (confirm('¿Estás seguro de que quieres cancelar esta cita?')) {
-                        updateBookingStatus(currentEventId, 'cancelled');
-                    }
-                });
-                completeBtn.addEventListener('click', function () {
-                    if (confirm('¿Estás seguro de que quieres marcar esta cita como completada?')) {
-                        updateBookingStatus(currentEventId, 'completed');
-                    }
-                });
-
                 modal.addEventListener('click', function (e) {
                     if (e.target === modal) {
                         closeModal();
                     }
                 });
 
-                // Actualizar el calendario al cambiar los filtros
-                if (professionalSelect) {
-                    professionalSelect.addEventListener('change', function () {
-                        calendar.refetchEvents();
+                if (cancelBtn) {
+                    cancelBtn.addEventListener('click', function () {
+                        if (confirm('¿Estás seguro de que quieres cancelar esta cita?')) {
+                            fetch('{{ route("platform.bookings.update-status", ":id") }}'.replace(':id', currentEventId), {
+                                method: 'POST',
+                                headers: {
+                                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                                    'Content-Type': 'application/json',
+                                    'Accept': 'application/json'
+                                },
+                                body: JSON.stringify({ status: 'cancelled' })
+                            })
+                                .then(response => response.json())
+                                .then(data => {
+                                    if (data.success) {
+                                        alert('Cita cancelada exitosamente');
+                                        closeModal();
+                                        calendar.refetchEvents();
+                                    } else {
+                                        alert('Error: ' + (data.error || 'No se pudo cancelar la cita'));
+                                    }
+                                })
+                                .catch(error => alert('Error: ' + error.message));
+                        }
                     });
                 }
+
+                if (completeBtn) {
+                    completeBtn.addEventListener('click', function () {
+                        if (confirm('¿Estás seguro de que quieres marcar esta cita como completada?')) {
+                            fetch('{{ route("platform.bookings.update-status", ":id") }}'.replace(':id', currentEventId), {
+                                method: 'POST',
+                                headers: {
+                                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                                    'Content-Type': 'application/json',
+                                    'Accept': 'application/json'
+                                },
+                                body: JSON.stringify({ status: 'completed' })
+                            })
+                                .then(response => response.json())
+                                .then(data => {
+                                    if (data.success) {
+                                        alert('Cita completada exitosamente');
+                                        closeModal();
+                                        calendar.refetchEvents();
+                                    } else {
+                                        alert('Error: ' + (data.error || 'No se pudo completar la cita'));
+                                    }
+                                })
+                                .catch(error => alert('Error: ' + error.message));
+                        }
+                    });
+                }
+
+                if (professionalSelect) {
+                    professionalSelect.addEventListener('change', function () {
+                        var urlParams = new URLSearchParams({
+                            selected_date: new URLSearchParams(window.location.search).get('selected_date') || '{{ Carbon\Carbon::today("America/Bogota")->format("Y-m-d") }}',
+                            professional_id: professionalSelect.value || '',
+                            status: document.getElementById('calendar_status')?.value || 'all'
+                        });
+                        window.location.href = '{{ route("platform.dashboard") }}?' + urlParams.toString();
+                    });
+                }
+
                 if (statusSelect) {
                     statusSelect.addEventListener('change', function () {
-                        calendar.refetchEvents();
+                        var urlParams = new URLSearchParams({
+                            selected_date: new URLSearchParams(window.location.search).get('selected_date') || '{{ Carbon\Carbon::today("America/Bogota")->format("Y-m-d") }}',
+                            professional_id: document.getElementById('calendar_professional_id')?.value || '',
+                            status: statusSelect.value || 'all'
+                        });
+                        window.location.href = '{{ route("platform.dashboard") }}?' + urlParams.toString();
                     });
                 }
             });
