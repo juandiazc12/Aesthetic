@@ -103,7 +103,11 @@ class BookingEditScreen extends Screen
                 $status === 'cancelled' ? 'cancelled_at' : 'completed_at' => Carbon::now('America/Bogota'),
             ]);
 
-            return response()->json(['success' => true, 'message' => 'Cita actualizada exitosamente.']);
+            return response()->json([
+                'success' => true,
+                'message' => 'Cita actualizada exitosamente.',
+                'redirect' => route('platform.dashboard')
+            ]);
         } catch (\Exception $e) {
             Log::error('Error in updateBookingStatus: ' . $e->getMessage(), [
                 'trace' => $e->getTraceAsString(),

@@ -100,12 +100,12 @@ class DashboardScreen extends Screen
                     'service' => is_object($booking->service) ? $booking->service->name : 'Sin servicio',
                     'professional' => is_object($booking->professional) ? $booking->professional->name : 'Sin profesional',
                     'customer' => is_object($booking->customer) ? ($booking->customer->first_name ?? $booking->customer->name ?? 'Sin nombre') : 'Sin cliente',
-                    'scheduled_at' => $booking->scheduled_at instanceof \Carbon\Carbon ? 
+                    'scheduled_at' => $booking->scheduled_at instanceof \Carbon\Carbon ?
                         Carbon::parse($booking->scheduled_at, 'America/Bogota')->format('H:i') : 'Sin horario',
                     'duration' => is_object($booking->service) ? $booking->service->duration : null,
                     'status' => $booking->statusSpanish ?? 'Desconocido',
-                    'total_amount' => $booking->total_amount !== null ? 
-                        number_format((float)$booking->total_amount, 0) : '0',
+                    'total_amount' => $booking->total_amount !== null ?
+                        number_format((float) $booking->total_amount, 0) : '0',
                 ];
             })->toArray();
 
@@ -113,8 +113,10 @@ class DashboardScreen extends Screen
             'metrics' => [
                 'total_bookings' => ['value' => $totalBookings],
                 'bookings_today' => ['value' => $bookingsToday],
-                'monthly_revenue' => ['value' => $monthlyRevenue !== null ? 
-                    number_format((float)$monthlyRevenue, 0) : '0'],
+                'monthly_revenue' => [
+                    'value' => $monthlyRevenue !== null ?
+                        number_format((float) $monthlyRevenue, 0) : '0'
+                ],
             ],
             'service_ranking' => $serviceRanking,
             'professionals' => $professionals,
@@ -127,7 +129,7 @@ class DashboardScreen extends Screen
             'status' => $status,
             'month' => (int) $month,
             'year' => (int) $year,
-            'selected_professional_name' => $professionalId 
+            'selected_professional_name' => $professionalId
                 ? ($professionals[$professionalId] ?? 'Profesional seleccionado')
                 : ($isAdmin ? 'Todos los Profesionales' : 'Mi Dashboard'),
         ];
@@ -155,7 +157,7 @@ class DashboardScreen extends Screen
     public function layout(): iterable
     {
         $queryData = $this->query(request());
-        
+
         $layouts = [
             Layout::metrics([
                 'Total de Citas' => 'metrics.total_bookings',
@@ -164,17 +166,17 @@ class DashboardScreen extends Screen
             ]),
             Layout::view('calendar'),
             Layout::table('service_ranking', [
-                TD::make('service_name', 'Servicio')->render(fn ($item) => $item['service_name']),
-                TD::make('count', 'Número de Citas')->render(fn ($item) => $item['count']),
+                TD::make('service_name', 'Servicio')->render(fn($item) => $item['service_name']),
+                TD::make('count', 'Número de Citas')->render(fn($item) => $item['count']),
             ])->title('Ranking de Servicios'),
             Layout::table('daily_bookings', [
-                TD::make('service', 'Servicio')->render(fn ($item) => $item['service']),
-                TD::make('professional', 'Profesional')->render(fn ($item) => $item['professional']),
-                TD::make('customer', 'Cliente')->render(fn ($item) => $item['customer']),
-                TD::make('scheduled_at', 'Hora')->render(fn ($item) => $item['scheduled_at']),
-                TD::make('duration', 'Duración (min)')->render(fn ($item) => $item['duration']),
-                TD::make('status', 'Estado')->render(fn ($item) => $item['status']),
-                TD::make('total_amount', 'Monto')->render(fn ($item) => $item['total_amount']),
+                TD::make('service', 'Servicio')->render(fn($item) => $item['service']),
+                TD::make('professional', 'Profesional')->render(fn($item) => $item['professional']),
+                TD::make('customer', 'Cliente')->render(fn($item) => $item['customer']),
+                TD::make('scheduled_at', 'Hora')->render(fn($item) => $item['scheduled_at']),
+                TD::make('duration', 'Duración (min)')->render(fn($item) => $item['duration']),
+                TD::make('status', 'Estado')->render(fn($item) => $item['status']),
+                TD::make('total_amount', 'Monto')->render(fn($item) => $item['total_amount']),
             ])->title('Citas del Día Seleccionado'),
         ];
 
@@ -186,23 +188,33 @@ class DashboardScreen extends Screen
         try {
             $user = auth()->user();
             $isAdmin = $user && in_array('admin', $user->roles()->pluck('slug')->toArray());
-            
+
             $professionalId = $request->input('professional_id', '');
             $status = $request->input('status', 'all');
-            $month = $request->input('month', Carbon::today('America/Bogota')->month);
-            $year = $request->input('year', Carbon::today('America/Bogota')->year);
+            $month = $request->input('month', Carbon::today('America/Bogota')->month); // 7 (julio)
+            $year = $request->input('year', Carbon::today('America/Bogota')->year); // 2025
+
+            Log::debug('Parámetros recibidos:', [
+                'professional_id' => $professionalId,
+                'status' => $status,
+                'month' => $month,
+                'year' => $year
+            ]);
 
             if (!$isAdmin) {
                 $professionalId = $user ? $user->id : null;
             }
 
+            $startOfMonth = Carbon::create($year, $month, 1, 0, 0, 0, 'America/Bogota')->startOfMonth(); // 2025-07-01
+            $endOfMonth = $startOfMonth->copy()->endOfMonth(); // 2025-07-31
+
             $bookingsQuery = Booking::with(['service', 'professional', 'customer'])
-                ->whereMonth('scheduled_at', $month)
-                ->whereYear('scheduled_at', $year)
+                ->whereBetween('scheduled_at', [$startOfMonth, $endOfMonth])
                 ->when($professionalId, fn($q) => $q->where('professional_id', $professionalId))
                 ->when($status !== 'all', fn($q) => $q->where('status', $status));
 
             $bookings = $bookingsQuery->get();
+            Log::debug('Reservas encontradas:', ['count' => $bookings->count(), 'bookings' => $bookings->toArray()]);
 
             $events = $bookings->map(function ($booking) use ($isAdmin) {
                 $startDate = $booking->scheduled_at instanceof \Carbon\Carbon
@@ -211,7 +223,7 @@ class DashboardScreen extends Screen
 
                 $title = is_object($booking->service) ? $booking->service->name : 'Cita';
                 if ($isAdmin && is_object($booking->professional)) {
-                    $title;
+                    $title .= ' (' . $booking->professional->name . ')';
                 }
 
                 return [
@@ -220,15 +232,17 @@ class DashboardScreen extends Screen
                     'start' => $startDate,
                     'url' => route('platform.bookings.edit', $booking),
                     'extendedProps' => [
-                        'canCancel' => $booking->scheduled_at instanceof \Carbon\Carbon
-                            ? Carbon::now('America/Bogota')->lt(Carbon::parse($booking->scheduled_at, 'America/Bogota')->subHour())
-                            : false,
                         'status' => $booking->statusSpanish ?? $booking->status,
                         'professional' => is_object($booking->professional) ? $booking->professional->name : 'Sin profesional',
                         'customer' => is_object($booking->customer) ? ($booking->customer->first_name ?? $booking->customer->name ?? 'Sin nombre') : 'Sin cliente',
                     ],
                 ];
             })->toArray();
+
+            Log::debug('Eventos generados para el calendario:', [
+                'count' => count($events),
+                'events' => $events,
+            ]);
 
             return response()->json($events);
         } catch (\Exception $e) {
@@ -244,7 +258,7 @@ class DashboardScreen extends Screen
         try {
             $user = auth()->user();
             $isAdmin = $user && in_array('admin', $user->roles()->pluck('slug')->toArray());
-            
+
             $selectedDate = $request->input('selected_date', Carbon::today('America/Bogota')->format('Y-m-d'));
             $professionalId = $request->input('professional_id', '');
             $status = $request->input('status', 'all');
@@ -273,12 +287,12 @@ class DashboardScreen extends Screen
                         'service' => is_object($booking->service) ? $booking->service->name : 'Sin servicio',
                         'professional' => is_object($booking->professional) ? $booking->professional->name : 'Sin profesional',
                         'customer' => is_object($booking->customer) ? ($booking->customer->first_name ?? $booking->customer->name ?? 'Sin nombre') : 'Sin cliente',
-                        'scheduled_at' => $booking->scheduled_at instanceof \Carbon\Carbon ? 
+                        'scheduled_at' => $booking->scheduled_at instanceof \Carbon\Carbon ?
                             Carbon::parse($booking->scheduled_at, 'America/Bogota')->format('H:i') : 'Sin horario',
                         'duration' => is_object($booking->service) ? $booking->service->duration : null,
                         'status' => $booking->statusSpanish ?? 'Desconocido',
-                        'total_amount' => $booking->total_amount !== null ? 
-                            number_format((float)$booking->total_amount, 0) : '0',
+                        'total_amount' => $booking->total_amount !== null ?
+                            number_format((float) $booking->total_amount, 0) : '0',
                     ];
                 })->toArray();
 
@@ -304,7 +318,7 @@ class DashboardScreen extends Screen
         try {
             $user = auth()->user();
             $isAdmin = $user && in_array('admin', $user->roles()->pluck('slug')->toArray());
-            
+
             $professionalId = $request->input('professional_id', '');
             $status = $request->input('status', 'all');
             $month = $request->input('month', Carbon::today('America/Bogota')->month);
@@ -352,8 +366,10 @@ class DashboardScreen extends Screen
             return response()->json([
                 'metrics' => [
                     'total_bookings' => ['value' => $totalBookings],
-                    'monthly_revenue' => ['value' => $monthlyRevenue !== null ? 
-                        number_format((float)$monthlyRevenue, 0) : '0'],
+                    'monthly_revenue' => [
+                        'value' => $monthlyRevenue !== null ?
+                            number_format((float) $monthlyRevenue, 0) : '0'
+                    ],
                 ],
                 'service_ranking' => $serviceRanking,
             ]);
@@ -368,7 +384,7 @@ class DashboardScreen extends Screen
     public function applyFilter(Request $request)
     {
         $params = [];
-        
+
         if ($request->has('selected_date')) {
             $params['selected_date'] = $request->input('selected_date');
         }
@@ -384,16 +400,16 @@ class DashboardScreen extends Screen
         if ($request->has('year')) {
             $params['year'] = $request->input('year');
         }
-        
+
         Log::info('Apply filter called', $params);
-        
+
         return redirect()->route('platform.dashboard', $params);
     }
 
     public function refresh(Request $request)
     {
         Log::info('Refresh called', $request->only(['professional_id', 'status', 'selected_date', 'month', 'year']));
-        
+
         return redirect()->route('platform.dashboard', $request->only(['professional_id', 'status', 'selected_date', 'month', 'year']));
     }
 }

@@ -73,7 +73,7 @@
         .action-buttons button {
             padding: 0.75rem 1.5rem;
             border-radius: 0.5rem;
-            font-size: 0.95rem;
+            fontlicting: 0.95rem;
             font-weight: 600;
             text-transform: uppercase;
             transition: all 0.3s ease;
@@ -198,80 +198,48 @@
             const completeBtn = document.getElementById('complete-service-btn');
             const bookingId = '{{ $booking['id'] }}';
             const updateStatusUrl = '{{ route("platform.bookings.update-status", $booking["id"]) }}';
-            console.log('Update Status URL:', updateStatusUrl);
+
+            function updateStatus(status) {
+                if (confirm(`¿Estás seguro de que quieres ${status === 'cancelled' ? 'cancelar' : 'completar'} esta cita?`)) {
+                    console.log(`Sending ${status} request to:`, updateStatusUrl);
+                    fetch(updateStatusUrl, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify({ status: status })
+                    })
+                        .then(response => {
+                            console.log('Response status:', response.status);
+                            if (!response.ok) {
+                                throw new Error('HTTP error ' + response.status);
+                            }
+                            return response.json();
+                        })
+                        .then(data => {
+                            console.log('Response data:', data);
+                            if (data.success) {
+                                alert(`Cita ${status === 'cancelled' ? 'cancelada' : 'completada'} exitosamente`);
+                                window.location.href = data.redirect || '{{ route("platform.dashboard") }}';
+                            } else {
+                                alert('Error: ' + (data.error || `No se pudo ${status === 'cancelled' ? 'cancelar' : 'completar'} la cita`));
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            alert(`Error al ${status === 'cancelled' ? 'cancelar' : 'completar'} la cita: ` + error.message);
+                        });
+                }
+            }
 
             if (cancelBtn) {
-                cancelBtn.addEventListener('click', function () {
-                    if (confirm('¿Estás seguro de que quieres cancelar esta cita?')) {
-                        console.log('Sending cancel request to:', updateStatusUrl);
-                        fetch(updateStatusUrl, {
-                            method: 'POST',
-                            headers: {
-                                'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                                'Content-Type': 'application/json',
-                                'Accept': 'application/json'
-                            },
-                            body: JSON.stringify({ status: 'cancelled' })
-                        })
-                            .then(response => {
-                                console.log('Response status:', response.status);
-                                if (!response.ok) {
-                                    throw new Error('HTTP error ' + response.status);
-                                }
-                                return response.json();
-                            })
-                            .then(data => {
-                                console.log('Response data:', data);
-                                if (data.success) {
-                                    alert('Cita cancelada exitosamente');
-                                    window.location.href = '{{ route("platform.dashboard") }}';
-                                } else {
-                                    alert('Error: ' + (data.error || 'No se pudo cancelar la cita'));
-                                }
-                            })
-                            .catch(error => {
-                                console.error('Error:', error);
-                                alert('Error al cancelar la cita: ' + error.message);
-                            });
-                    }
-                });
+                cancelBtn.addEventListener('click', () => updateStatus('cancelled'));
             }
 
             if (completeBtn) {
-                completeBtn.addEventListener('click', function () {
-                    if (confirm('¿Estás seguro de que quieres marcar esta cita como completada?')) {
-                        console.log('Sending complete request to:', updateStatusUrl);
-                        fetch(updateStatusUrl, {
-                            method: 'POST',
-                            headers: {
-                                'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                                'Content-Type': 'application/json',
-                                'Accept': 'application/json'
-                            },
-                            body: JSON.stringify({ status: 'completed' })
-                        })
-                            .then(response => {
-                                console.log('Response status:', response.status);
-                                if (!response.ok) {
-                                    throw new Error('HTTP error ' + response.status);
-                                }
-                                return response.json();
-                            })
-                            .then(data => {
-                                console.log('Response data:', data);
-                                if (data.success) {
-                                    alert('Cita completada exitosamente');
-                                    window.location.href = '{{ route("platform.dashboard") }}';
-                                } else {
-                                    alert('Error: ' + (data.error || 'No se pudo completar la cita'));
-                                }
-                            })
-                            .catch(error => {
-                                console.error('Error:', error);
-                                alert('Error al completar la cita: ' + error.message);
-                            });
-                    }
-                });
+                completeBtn.addEventListener('click', () => updateStatus('completed'));
             }
         });
     </script>
