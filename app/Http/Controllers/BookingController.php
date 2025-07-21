@@ -445,6 +445,14 @@ class BookingController extends Controller
 
     public function destroy($id)
     {
+        // ... (lógica existente de destroy)
+        try {
+            $booking = Booking::findOrFail($id);
+            // ... (lógica de cancelación existente)
+            $booking->customer->notify(new \App\Notifications\BookingCancelled($booking, 'La cita fue cancelada por el administrador. Si tienes dudas, contáctanos.'));
+        } catch (\Exception $e) {
+            // Manejo de errores
+        }
         try {
             $booking = Booking::where('id', $id)
                 ->where('customer_id', Auth::guard('customer')->id())
@@ -488,6 +496,17 @@ class BookingController extends Controller
 
     public function update(Request $request, $id)
     {
+        // ... (lógica existente de update)
+        // Buscar la reserva y actualizarla normalmente
+        // Luego de guardar los cambios:
+        try {
+            $booking = Booking::findOrFail($id);
+            // ... (lógica de actualización existente)
+            // Notificar al cliente sobre la modificación
+            $booking->customer->notify(new \App\Notifications\BookingEdited($booking));
+        } catch (\Exception $e) {
+            // Manejo de errores
+        }
         try {
             $booking = Booking::where('id', $id)
                 ->where('customer_id', Auth::guard('customer')->id())
