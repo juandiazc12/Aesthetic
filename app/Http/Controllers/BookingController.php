@@ -81,14 +81,27 @@ class BookingController extends Controller
     {
         try {
             $request->validate([
-                'professional_id' => 'required|exists:users,id',
-                'date' => 'required|date_format:Y-m-d'
+                'professional_id' => 'required|integer|exists:users,id',
+                'date' => 'required|date_format:Y-m-d',
             ]);
             $professionalId = $request->professional_id;
             $date = $request->date;
 
+            Log::info('Fetching available slots', [
+                'professional_id' => $professionalId,
+                'date' => $date,
+            ]);
+
+            // Validar que el profesional existe
+            $professional = User::find($professionalId);
+            if (!$professional) {
+                Log::error('Professional not found', ['professional_id' => $professionalId]);
+                return response()->json(['error' => 'Profesional no encontrado'], 404);
+            }
+
             $requestDate = Carbon::createFromFormat('Y-m-d', $date, 'America/Bogota')->startOfDay();
             if ($requestDate->isPast() && !$requestDate->isToday()) {
+                Log::warning('Attempt to fetch slots for past date', ['date' => $date]);
                 return response()->json(['error' => 'No se pueden reservar fechas pasadas'], 400);
             }
 
@@ -100,6 +113,12 @@ class BookingController extends Controller
                     return Carbon::parse($item, 'America/Bogota')->format('H:i');
                 })
                 ->toArray();
+
+            Log::debug('Booked times for professional', [
+                'professional_id' => $professionalId,
+                'date' => $date,
+                'booked_times' => $bookedTimes,
+            ]);
 
             $timeSlots = [
                 'morning' => ['07:00', '08:00', '09:00', '10:00', '11:00'],
@@ -121,9 +140,29 @@ class BookingController extends Controller
                 }
             }
 
+            Log::info('Available slots response', [
+                'professional_id' => $professionalId,
+                'date' => $date,
+                'available_slots' => $availableSlots,
+            ]);
+
             return response()->json($availableSlots);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            Log::error('Validation error in getAvailableSlots', [
+                'errors' => $e->errors(),
+                'professional_id' => $request->professional_id,
+                'date' => $request->date,
+            ]);
+            return response()->json([
+                'error' => 'Datos de entrada inválidos',
+                'details' => $e->errors(),
+            ], 422);
         } catch (\Exception $e) {
-            Log::error('Error getting available slots: ' . $e->getMessage());
+            Log::error('Error getting available slots: ' . $e->getMessage(), [
+                'professional_id' => $request->professional_id,
+                'date' => $request->date,
+                'trace' => $e->getTraceAsString(),
+            ]);
             return response()->json(['error' => 'Error al obtener horarios disponibles'], 500);
         }
     }
@@ -134,7 +173,7 @@ class BookingController extends Controller
             return response()->json(['error' => 'No autorizado'], 401);
         }
 
-        $request->validate([ 
+        $request->validate([
             'service_id' => 'required|exists:services,id',
             'professional_id' => 'required|exists:users,id',
             'scheduled_at' => 'required|date_format:Y-m-d H:i:s',
@@ -403,8 +442,13 @@ class BookingController extends Controller
         }
     }
 
-    public function list()
-    {
+   public function list()
+{
+    try {
+        Log::info('Fetching bookings for customer', [
+            'customer_id' => Auth::guard('customer')->id(),
+        ]);
+
         $bookings = Booking::with(['service', 'professional'])
             ->where('customer_id', Auth::guard('customer')->id())
             ->orderBy('scheduled_at', 'desc')
@@ -413,14 +457,17 @@ class BookingController extends Controller
                 return [
                     'id' => $booking->id,
                     'service' => [
-                        'name' => $booking->service->name,
-                        'duration' => $booking->service->duration,
-                        'image' => $booking->service->image,
+                        'id' => $booking->service ? $booking->service->id : null,
+                        'name' => $booking->service ? $booking->service->name : 'Desconocido',
+                        'duration' => $booking->service ? $booking->service->duration : null,
+                        'image' => $booking->service ? $booking->service->image : null,
+                        'price' => $booking->service ? $booking->service->price : null,
                     ],
                     'professional' => [
-                        'name' => $booking->professional->name,
-                        'email' => $booking->professional->email,
-                        'photo' => $booking->professional->photo,
+                        'id' => $booking->professional ? $booking->professional->id : null,
+                        'name' => $booking->professional ? $booking->professional->name : 'Desconocido',
+                        'email' => $booking->professional ? $booking->professional->email : null,
+                        'photo' => $booking->professional ? $booking->professional->photo : null,
                     ],
                     'scheduled_at' => Carbon::parse($booking->scheduled_at, 'America/Bogota')->toDateTimeString(),
                     'scheduled_date' => Carbon::parse($booking->scheduled_at, 'America/Bogota')->format('d/m/Y'),
@@ -439,20 +486,22 @@ class BookingController extends Controller
         return Inertia::render('Booking/BookingList', [
             'bookings' => $bookings,
             'customer' => Auth::guard('customer')->user(),
-            'professionals' => []
+        ]);
+    } catch (\Exception $e) {
+        Log::error('Error fetching bookings: ' . $e->getMessage(), [
+            'customer_id' => Auth::guard('customer')->id(),
+            'trace' => $e->getTraceAsString(),
+        ]);
+        return Inertia::render('Booking/BookingList', [
+            'bookings' => [],
+            'customer' => Auth::guard('customer')->user(),
+            'error' => 'Error al cargar las reservas: ' . $e->getMessage(),
         ]);
     }
+}
 
     public function destroy($id)
     {
-        // ... (lógica existente de destroy)
-        try {
-            $booking = Booking::findOrFail($id);
-            // ... (lógica de cancelación existente)
-            $booking->customer->notify(new \App\Notifications\BookingCancelled($booking, 'La cita fue cancelada por el administrador. Si tienes dudas, contáctanos.'));
-        } catch (\Exception $e) {
-            // Manejo de errores
-        }
         try {
             $booking = Booking::where('id', $id)
                 ->where('customer_id', Auth::guard('customer')->id())
@@ -468,10 +517,7 @@ class BookingController extends Controller
                     'scheduled_at' => $booking->scheduled_at,
                     'now' => $now,
                 ]);
-                return response()->json([
-                    'success' => false,
-                    'error' => 'No se puede cancelar la reserva menos de 1 hora antes del servicio',
-                ], 403);
+                return redirect()->route('booking.BookingList')->with('error', 'No se puede cancelar la reserva menos de 1 hora antes del servicio');
             }
 
             $booking->update([
@@ -479,38 +525,31 @@ class BookingController extends Controller
                 'cancelled_at' => Carbon::now('America/Bogota')->toDateTimeString(),
             ]);
 
+            $booking->customer->notify(new \App\Notifications\BookingCancelled($booking, 'La cita fue cancelada por el cliente.'));
+
             Log::info('Booking cancelled', ['booking_id' => $booking->id]);
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Reserva cancelada exitosamente',
-            ]);
+            return redirect()->route('booking.BookingList')->with('success', 'Reserva cancelada exitosamente');
+
         } catch (\Exception $e) {
             Log::error('Error cancelling booking: ' . $e->getMessage());
-            return response()->json([
-                'success' => false,
-                'error' => 'Error al cancelar la reserva: ' . $e->getMessage(),
-            ], 500);
+            return redirect()->route('booking.BookingList')->with('error', 'Error al cancelar la reserva: ' . $e->getMessage());
         }
     }
 
     public function update(Request $request, $id)
     {
-        // ... (lógica existente de update)
-        // Buscar la reserva y actualizarla normalmente
-        // Luego de guardar los cambios:
         try {
-            $booking = Booking::findOrFail($id);
-            // ... (lógica de actualización existente)
-            // Notificar al cliente sobre la modificación
-            $booking->customer->notify(new \App\Notifications\BookingEdited($booking));
-        } catch (\Exception $e) {
-            // Manejo de errores
-        }
-        try {
-            $booking = Booking::where('id', $id)
+            $booking = Booking::with(['service', 'professional'])
+                ->where('id', $id)
                 ->where('customer_id', Auth::guard('customer')->id())
                 ->firstOrFail();
+
+            Log::info('Attempting to update booking', [
+                'booking_id' => $id,
+                'customer_id' => Auth::guard('customer')->id(),
+                'request_data' => $request->all(),
+            ]);
 
             $scheduledAt = Carbon::parse($booking->scheduled_at, 'America/Bogota');
             $now = Carbon::now('America/Bogota');
@@ -522,68 +561,155 @@ class BookingController extends Controller
                     'scheduled_at' => $booking->scheduled_at,
                     'now' => $now,
                 ]);
-                return response()->json([
-                    'success' => false,
+                return Inertia::render('Booking/BookingList', [
+                    'bookings' => $this->getMappedBookings(),
+                    'customer' => Auth::guard('customer')->user(),
                     'error' => 'No se puede editar la reserva menos de 1 hora antes del servicio',
-                ], 403);
+                ]);
             }
 
             $request->validate([
                 'service_id' => 'required|exists:services,id',
-                'professional_id' => 'required|exists:users,id',
                 'scheduled_at' => 'required|date_format:Y-m-d H:i:s',
             ]);
 
-            $newScheduledAt = Carbon::createFromFormat('Y-m-d H:i:s', $request->scheduled_at, 'America/Bogota');
-            if ($newScheduledAt->isPast()) {
-                return response()->json(['error' => 'La fecha y hora seleccionada ya pasó'], 400);
+            // Verificar si el profesional ofrece el servicio
+            $service = Service::findOrFail($request->service_id);
+            $serviceList = ServiceList::where('name', $service->name)->first();
+            if ($serviceList) {
+                $hasService = $serviceList->servicesList()
+                    ->where('users.id', $booking->professional_id)
+                    ->exists();
+                if (!$hasService) {
+                    Log::warning('Professional does not offer this service', [
+                        'booking_id' => $booking->id,
+                        'service_id' => $request->service_id,
+                        'professional_id' => $booking->professional_id,
+                    ]);
+                    return Inertia::render('Booking/BookingList', [
+                        'bookings' => $this->getMappedBookings(),
+                        'customer' => Auth::guard('customer')->user(),
+                        'error' => 'El profesional asignado no ofrece este servicio',
+                    ]);
+                }
             }
 
-            $existingBooking = Booking::where('professional_id', $request->professional_id)
+            $newScheduledAt = Carbon::createFromFormat('Y-m-d H:i:s', $request->scheduled_at, 'America/Bogota');
+            if ($newScheduledAt->isPast()) {
+                Log::warning('Attempt to set past date for booking', [
+                    'booking_id' => $booking->id,
+                    'new_scheduled_at' => $request->scheduled_at,
+                ]);
+                return Inertia::render('Booking/BookingList', [
+                    'bookings' => $this->getMappedBookings(),
+                    'customer' => Auth::guard('customer')->user(),
+                    'error' => 'La fecha y hora seleccionada ya pasó',
+                ]);
+            }
+
+            $existingBooking = Booking::where('professional_id', $booking->professional_id)
                 ->where('scheduled_at', $newScheduledAt->toDateTimeString())
                 ->whereNotIn('status', ['cancelled', 'completed'])
                 ->where('id', '!=', $id)
                 ->first();
 
             if ($existingBooking) {
-                return response()->json(['error' => 'El horario ya está ocupado'], 400);
+                Log::warning('Selected time slot is already booked', [
+                    'booking_id' => $booking->id,
+                    'new_scheduled_at' => $newScheduledAt,
+                    'existing_booking_id' => $existingBooking->id,
+                ]);
+                return Inertia::render('Booking/BookingList', [
+                    'bookings' => $this->getMappedBookings(),
+                    'customer' => Auth::guard('customer')->user(),
+                    'error' => 'El horario ya está ocupado',
+                ]);
             }
 
             $booking->update([
                 'service_id' => $request->service_id,
-                'professional_id' => $request->professional_id,
                 'scheduled_at' => $newScheduledAt->toDateTimeString(),
                 'status' => 'pending',
             ]);
 
-            Log::info('Booking updated', ['booking_id' => $booking->id]);
+            // Enviar notificación de edición
+            try {
+                $booking->customer->notify(new \App\Notifications\BookingEdited($booking));
+            } catch (\Exception $e) {
+                Log::warning('Failed to send BookingEdited notification: ' . $e->getMessage());
+            }
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Reserva actualizada exitosamente',
-                'booking' => [
-                    'id' => $booking->id,
-                    'service' => [
-                        'name' => $booking->service->name,
-                        'duration' => $booking->service->duration,
-                        'image' => $booking->service->image ? \Storage::url($booking->service->image) : null,
-                    ],
-                    'professional' => [
-                        'name' => $booking->professional->name,
-                        'photo' => $booking->professional->photo ? \Storage::url($booking->professional->photo) : null,
-                    ],
-                    'scheduled_at' => Carbon::parse($booking->scheduled_at, 'America/Bogota')->toDateTimeString(),
-                    'status' => $booking->status,
-                ],
+            Log::info('Booking updated successfully', [
+                'booking_id' => $booking->id,
+                'service_id' => $request->service_id,
+                'scheduled_at' => $newScheduledAt->toDateTimeString(),
             ]);
+
+            return Inertia::render('Booking/BookingList', [
+                'bookings' => $this->getMappedBookings(),
+                'customer' => Auth::guard('customer')->user(),
+                'success' => 'Reserva actualizada exitosamente',
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            Log::error('Validation error in update booking', [
+                'booking_id' => $id,
+                'errors' => $e->errors(),
+                'request_data' => $request->all(),
+            ]);
+            return back()->withErrors($e->errors())->withInput();
         } catch (\Exception $e) {
-            Log::error('Error updating booking: ' . $e->getMessage());
-            return response()->json([
-                'success' => false,
+            Log::error('Error updating booking: ' . $e->getMessage(), [
+                'booking_id' => $id,
+                'request_data' => $request->all(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+            return Inertia::render('Booking/BookingList', [
+                'bookings' => $this->getMappedBookings(),
+                'customer' => Auth::guard('customer')->user(),
                 'error' => 'Error al actualizar la reserva: ' . $e->getMessage(),
-            ], 500);
+            ]);
         }
     }
+
+    // Método auxiliar para obtener las reservas mapeadas
+    private function getMappedBookings()
+    {
+        return Booking::with(['service', 'professional'])
+            ->where('customer_id', Auth::guard('customer')->id())
+            ->orderBy('scheduled_at', 'desc')
+            ->get()
+            ->map(function ($booking) {
+                return [
+                    'id' => $booking->id,
+                    'service' => [
+                        'id' => $booking->service->id,
+                        'name' => $booking->service->name,
+                        'duration' => $booking->service->duration,
+                        'image' => $booking->service->image,
+                        'price' => $booking->service->price,
+                    ],
+                    'professional' => [
+                        'id' => $booking->professional ? $booking->professional->id : 0,
+                        'name' => $booking->professional ? $booking->professional->name : 'Desconocido',
+                        'email' => $booking->professional ? $booking->professional->email : null,
+                        'photo' => $booking->professional ? $booking->professional->photo : null,
+                    ],
+                    'scheduled_at' => Carbon::parse($booking->scheduled_at, 'America/Bogota')->toDateTimeString(),
+                    'scheduled_date' => Carbon::parse($booking->scheduled_at, 'America/Bogota')->format('d/m/Y'),
+                    'scheduled_time' => Carbon::parse($booking->scheduled_at, 'America/Bogota')->format('H:i'),
+                    'scheduled_day' => $this->getDayNameInSpanish(Carbon::parse($booking->scheduled_at, 'America/Bogota')->format('l')),
+                    'total_amount' => $booking->total_amount,
+                    'payment_method' => $booking->payment_method,
+                    'payment_status' => $booking->payment_status,
+                    'status' => $booking->status,
+                    'status_spanish' => $booking->statusSpanish,
+                    'created_at' => Carbon::parse($booking->created_at, 'America/Bogota')->toDateTimeString(),
+                    'completed_at' => $booking->completed_at ? Carbon::parse($booking->completed_at, 'America/Bogota')->toDateTimeString() : null,
+                ];
+            });
+    }
+
+
 
     public function getAvailableDates(Request $request)
     {
