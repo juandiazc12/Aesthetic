@@ -150,42 +150,43 @@ export default function AddBooking({ service }: ComponentProps) {
   };
 
   const fetchAvailableSlots = async () => {
-    if (!professionalId || !selectedDate) return;
+  if (!professionalId || !selectedDate) return;
 
-    setLoading(true);
-    setError(null);
+  setLoading(true);
+  setError(null);
 
-    try {
-      const response = await fetch('/api/booking/available-slots', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
-        },
-        body: JSON.stringify({
-          professional_id: professionalId,
-          date: selectedDate,
-        }),
-      });
+  try {
+    const response = await fetch('/api/booking/available-slots', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+      },
+      body: JSON.stringify({
+        professional_id: professionalId,
+        date: selectedDate,
+        service_id: service.id, // ¡Agregar esta línea!
+      }),
+    });
 
-      if (!response.ok) {
-        throw new Error('Error al obtener horarios disponibles');
-      }
-
-      const data = await response.json();
-      setAvailableSlots(data);
-      
-      // Limpiar selección de hora si no está disponible
-      if (selectedTime && !data[timeOfDay]?.includes(selectedTime)) {
-        setSelectedTime(null);
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error desconocido');
-      console.error('Error fetching available slots:', err);
-    } finally {
-      setLoading(false);
+    if (!response.ok) {
+      throw new Error('Error al obtener horarios disponibles');
     }
-  };
+
+    const data = await response.json();
+    setAvailableSlots(data);
+    
+    // Limpiar selección de hora si no está disponible
+    if (selectedTime && !data[timeOfDay]?.includes(selectedTime)) {
+      setSelectedTime(null);
+    }
+  } catch (err) {
+    setError(err instanceof Error ? err.message : 'Error desconocido');
+    console.error('Error fetching available slots:', err);
+  } finally {
+    setLoading(false);
+  }
+};
 
   const handleDateSelection = (date: string) => {
     setSelectedDate(date);

@@ -77,95 +77,175 @@ class BookingController extends Controller
         }
     }
 
-    public function getAvailableSlots(Request $request)
-    {
-        try {
-            $request->validate([
-                'professional_id' => 'required|integer|exists:users,id',
-                'date' => 'required|date_format:Y-m-d',
-            ]);
-            $professionalId = $request->professional_id;
-            $date = $request->date;
+  public function getAvailableSlots(Request $request)
+{
+    try {
+        $request->validate([
+            'professional_id' => 'required|integer|exists:users,id',
+            'date' => 'required|date_format:Y-m-d',
+            'service_id' => 'required|integer|exists:services,id',
+        ]);
 
-            Log::info('Fetching available slots', [
-                'professional_id' => $professionalId,
-                'date' => $date,
-            ]);
+        $professionalId = $request->professional_id;
+        $date = $request->date;
+        $serviceId = $request->service_id;
 
-            // Validar que el profesional existe
-            $professional = User::find($professionalId);
-            if (!$professional) {
-                Log::error('Professional not found', ['professional_id' => $professionalId]);
-                return response()->json(['error' => 'Profesional no encontrado'], 404);
-            }
+        Log::info('Fetching available slots', [
+            'professional_id' => $professionalId,
+            'date' => $date,
+            'service_id' => $serviceId,
+        ]);
 
-            $requestDate = Carbon::createFromFormat('Y-m-d', $date, 'America/Bogota')->startOfDay();
-            if ($requestDate->isPast() && !$requestDate->isToday()) {
-                Log::warning('Attempt to fetch slots for past date', ['date' => $date]);
-                return response()->json(['error' => 'No se pueden reservar fechas pasadas'], 400);
-            }
+        // Validar que el profesional existe
+        $professional = User::find($professionalId);
+        if (!$professional) {
+            Log::error('Professional not found', ['professional_id' => $professionalId]);
+            return response()->json(['error' => 'Profesional no encontrado'], 404);
+        }
 
-            $bookedTimes = Booking::whereDate('scheduled_at', $date)
-                ->where('professional_id', $professionalId)
-                ->whereNotIn('status', ['cancelled', 'completed'])
-                ->pluck('scheduled_at')
-                ->map(function ($item) {
-                    return Carbon::parse($item, 'America/Bogota')->format('H:i');
-                })
-                ->toArray();
+        // Obtener el servicio para conocer su duración
+        $service = Service::find($serviceId);
+        if (!$service) {
+            Log::error('Service not found', ['service_id' => $serviceId]);
+            return response()->json(['error' => 'Servicio no encontrado'], 404);
+        }
 
-            Log::debug('Booked times for professional', [
-                'professional_id' => $professionalId,
-                'date' => $date,
-                'booked_times' => $bookedTimes,
-            ]);
+        // CORRECCIÓN: Convertir explícitamente a entero
+        $serviceDuration = (int) $service->duration; // en minutos
 
-            $timeSlots = [
-                'morning' => ['07:00', '08:00', '09:00', '10:00', '11:00'],
-                'afternoon' => ['12:00', '13:00', '14:00', '15:00', '16:00', '17:00'],
-                'evening' => ['18:00', '19:00', '20:00', '21:00', '22:00']
-            ];
+        Log::info('Service duration converted', [
+            'original_duration' => $service->duration,
+            'converted_duration' => $serviceDuration,
+            'duration_type' => gettype($serviceDuration)
+        ]);
 
-            $availableSlots = [];
-            foreach ($timeSlots as $period => $slots) {
-                $availableSlots[$period] = [];
-                foreach ($slots as $slot) {
-                    $slotTime = Carbon::createFromFormat('Y-m-d H:i', $date . ' ' . $slot, 'America/Bogota');
-                    if ($requestDate->isToday() && $slotTime->isPast()) {
-                        continue;
-                    }
-                    if (!in_array($slot, $bookedTimes)) {
-                        $availableSlots[$period][] = $slot;
+        $requestDate = Carbon::createFromFormat('Y-m-d', $date, 'America/Bogota')->startOfDay();
+        if ($requestDate->isPast() && !$requestDate->isToday()) {
+            Log::warning('Attempt to fetch slots for past date', ['date' => $date]);
+            return response()->json(['error' => 'No se pueden reservar fechas pasadas'], 400);
+        }
+
+        // Obtener todas las reservas del día para el profesional con sus horarios de fin
+        $bookedSlots = Booking::join('services', 'bookings.service_id', '=', 'services.id')
+            ->whereDate('bookings.scheduled_at', $date)
+            ->where('bookings.professional_id', $professionalId)
+            ->whereNotIn('bookings.status', ['cancelled', 'completed'])
+            ->select('bookings.scheduled_at', 'services.duration')
+            ->get()
+            ->map(function ($booking) {
+                $startTime = Carbon::parse($booking->scheduled_at, 'America/Bogota');
+                // CORRECCIÓN: Convertir también aquí a entero
+                $duration = (int) $booking->duration;
+                $endTime = $startTime->copy()->addMinutes($duration);
+                return [
+                    'start' => $startTime,
+                    'end' => $endTime,
+                    'start_time' => $startTime->format('H:i'),
+                    'end_time' => $endTime->format('H:i'),
+                    'duration' => $duration,
+                ];
+            });
+
+        Log::debug('Booked slots for professional', [
+            'professional_id' => $professionalId,
+            'date' => $date,
+            'booked_slots' => $bookedSlots->map(function($slot) {
+                return [
+                    'start_time' => $slot['start_time'],
+                    'end_time' => $slot['end_time'],
+                    'duration' => $slot['duration']
+                ];
+            })->toArray(),
+        ]);
+
+        $timeSlots = [
+            'morning' => ['07:00', '07:30', '08:00', '08:30', '09:00', '09:30', '10:00', '10:30', '11:00', '11:30'],
+            'afternoon' => ['12:00', '12:30', '13:00', '13:30', '14:00', '14:30', '15:00', '15:30', '16:00', '16:30', '17:00', '17:30'],
+            'evening' => ['18:00', '18:30', '19:00', '19:30', '20:00', '20:30']
+        ];
+
+        $availableSlots = [];
+
+        foreach ($timeSlots as $period => $slots) {
+            $availableSlots[$period] = [];
+
+            foreach ($slots as $slot) {
+                $slotTime = Carbon::createFromFormat('Y-m-d H:i', $date . ' ' . $slot, 'America/Bogota');
+                
+                // Verificar si el horario ya pasó (solo para hoy)
+                if ($requestDate->isToday() && $slotTime->isPast()) {
+                    continue;
+                }
+
+                // Calcular el horario de fin del nuevo servicio
+                $newServiceEnd = $slotTime->copy()->addMinutes($serviceDuration);
+
+                Log::debug('Checking slot availability', [
+                    'slot_time' => $slot,
+                    'slot_start' => $slotTime->format('H:i'),
+                    'slot_end' => $newServiceEnd->format('H:i'),
+                    'service_duration' => $serviceDuration
+                ]);
+
+                // Verificar si hay conflicto con reservas existentes
+                $hasConflict = false;
+                foreach ($bookedSlots as $bookedSlot) {
+                    // El nuevo servicio tiene conflicto si:
+                    // 1. Empieza antes de que termine una reserva existente Y termina después de que empiece esa reserva
+                    if ($slotTime->lt($bookedSlot['end']) && $newServiceEnd->gt($bookedSlot['start'])) {
+                        $hasConflict = true;
+                        Log::debug('Conflict detected', [
+                            'new_service_start' => $slotTime->format('H:i'),
+                            'new_service_end' => $newServiceEnd->format('H:i'),
+                            'existing_start' => $bookedSlot['start']->format('H:i'),
+                            'existing_end' => $bookedSlot['end']->format('H:i'),
+                        ]);
+                        break;
                     }
                 }
+
+                if (!$hasConflict) {
+                    $availableSlots[$period][] = $slot;
+                    Log::debug('Slot available', ['slot' => $slot]);
+                } else {
+                    Log::debug('Slot not available due to conflict', ['slot' => $slot]);
+                }
             }
-
-            Log::info('Available slots response', [
-                'professional_id' => $professionalId,
-                'date' => $date,
-                'available_slots' => $availableSlots,
-            ]);
-
-            return response()->json($availableSlots);
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            Log::error('Validation error in getAvailableSlots', [
-                'errors' => $e->errors(),
-                'professional_id' => $request->professional_id,
-                'date' => $request->date,
-            ]);
-            return response()->json([
-                'error' => 'Datos de entrada inválidos',
-                'details' => $e->errors(),
-            ], 422);
-        } catch (\Exception $e) {
-            Log::error('Error getting available slots: ' . $e->getMessage(), [
-                'professional_id' => $request->professional_id,
-                'date' => $request->date,
-                'trace' => $e->getTraceAsString(),
-            ]);
-            return response()->json(['error' => 'Error al obtener horarios disponibles'], 500);
         }
+
+        Log::info('Available slots response', [
+            'professional_id' => $professionalId,
+            'date' => $date,
+            'service_duration' => $serviceDuration,
+            'available_slots_count' => [
+                'morning' => count($availableSlots['morning']),
+                'afternoon' => count($availableSlots['afternoon']),
+                'evening' => count($availableSlots['evening'])
+            ],
+        ]);
+
+        return response()->json($availableSlots);
+
+    } catch (\Illuminate\Validation\ValidationException $e) {
+        Log::error('Validation error in getAvailableSlots', [
+            'errors' => $e->errors(),
+            'professional_id' => $request->professional_id,
+            'date' => $request->date,
+        ]);
+        return response()->json([
+            'error' => 'Datos de entrada inválidos',
+            'details' => $e->errors(),
+        ], 422);
+    } catch (\Exception $e) {
+        Log::error('Error getting available slots: ' . $e->getMessage(), [
+            'professional_id' => $request->professional_id,
+            'date' => $request->date,
+            'service_id' => $request->service_id,
+            'trace' => $e->getTraceAsString(),
+        ]);
+        return response()->json(['error' => 'Error al obtener horarios disponibles'], 500);
     }
+}
 
     public function store(Request $request)
     {
