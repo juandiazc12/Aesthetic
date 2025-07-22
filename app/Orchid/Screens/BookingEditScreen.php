@@ -103,6 +103,11 @@ class BookingEditScreen extends Screen
                 $status === 'cancelled' ? 'cancelled_at' : 'completed_at' => Carbon::now('America/Bogota'),
             ]);
 
+            // Notificar al cliente si la cita es cancelada por el profesional
+            if ($status === 'cancelled' && $booking->customer) {
+                $booking->customer->notify(new \App\Notifications\BookingCancelled($booking, 'La cita fue cancelada por el profesional.'));
+            }
+
             return response()->json([
                 'success' => true,
                 'message' => 'Cita actualizada exitosamente.',

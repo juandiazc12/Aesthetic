@@ -29,11 +29,15 @@ class BookingCancelled extends Notification implements ShouldQueue
     public function toMail($notifiable)
     {
         return (new MailMessage)
-            ->subject('Tu cita ha sido cancelada')
-            ->greeting('Hola ' . $notifiable->first_name . ',')
-            ->line('Lamentamos informarte que tu cita ha sido cancelada por el equipo de Aesthectic.')
-            ->line($this->reason ? 'Motivo: ' . $this->reason : 'Si necesitas más información, contáctanos.')
-            ->line('Te pedimos disculpas por los inconvenientes.')
-            ->salutation('Equipo Aesthectic');
+            ->subject('Cancelación de Cita - Aesthectic')
+            ->greeting('Estimado/a ' . $notifiable->first_name . ',')
+            ->line('Nos dirigimos a usted para informarle que su cita programada para el ' . $this->booking->appointment_date->format('d/m/Y') . ' a las ' . $this->booking->appointment_time . ' ha sido cancelada.')
+            ->lineIf($this->reason, 'Motivo de la cancelación: ' . $this->reason)
+            ->line('Entendemos que esta situación puede generar inconvenientes y nos disculpamos sinceramente por ello.')
+            ->line('Nuestro equipo está disponible para reprogramar su cita en el horario que mejor se adapte a sus necesidades.')
+            ->action('Reagendar Cita', url('/bookings/reschedule/' . $this->booking->id))
+            ->line('Para cualquier consulta o asistencia adicional, no dude en contactarnos a través de nuestros canales de atención al cliente.')
+            ->line('Agradecemos su comprensión y esperamos poder atenderle pronto.')
+            ->salutation('Atentamente,<br>Equipo de Atención al Cliente<br>Aesthectic');
     }
-}
+} 
