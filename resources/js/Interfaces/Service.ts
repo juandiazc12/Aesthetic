@@ -12,6 +12,7 @@ export interface Services {
     prev_page_url: any
     to: number
     total: number
+    price: number
 }
 
 export interface Daum {

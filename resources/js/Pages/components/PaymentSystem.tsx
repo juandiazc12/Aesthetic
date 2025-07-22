@@ -1,10 +1,20 @@
 import React, { useState } from 'react';
 import { CreditCard, Banknote, Building2, Check, X, Loader2 } from 'lucide-react';
 import axios from 'axios';
+import Service from '../Services/Service';
+interface Service {
+  id: number;
+  name: string;
+  description: string;
+  price: number;
+  duration: number;
+  status: string;
+}
 
 interface PaymentSystemProps {
   amount: number;
   serviceId: number;
+  price:number;
   serviceName: string;
   bookingId: number;
   customerEmail: string;
@@ -334,7 +344,7 @@ export function PaymentSystem({
         <div className="flex justify-between items-center mb-4">
           <span className="text-gray-600">Total a pagar:</span>
           <span className="text-2xl font-bold text-gray-800">
-            ${amount.toLocaleString('es-CO')} COP
+            ${amount} COP
           </span>
         </div>
 

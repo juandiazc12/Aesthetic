@@ -11,7 +11,7 @@ interface Service {
   id: number;
   name: string;
   description: string;
-  price: string;
+  price: number;
   duration: number;
   status: string;
 }
@@ -265,7 +265,7 @@ export default function AddBooking({ service }: ComponentProps) {
     return (
       <div className="w-full max-w-[30rem]">
         <PaymentSystem
-          amount={Number(service.price)}
+          amount={service.price}
           serviceId={service.id}
           serviceName={service.name}
           bookingId={0} // Opcional, si no lo necesitas
