@@ -5,6 +5,10 @@ use App\Http\Controllers\AboutController;
 use App\Http\Controllers\Services;
 use App\Http\Controllers\MercadoPagoController;
 use Inertia\Inertia;
+use App\Http\Controllers\PqrsController;
+
+
+
 
 Route::get('/', [\App\Http\Controllers\Welcome::class, 'index'])->name('welcome');
 Route::get('/service/{slug}', [\App\Http\Controllers\Services::class, 'show'])->name('service');
@@ -96,3 +100,4 @@ Route::prefix('api/booking')->group(function () {
     Route::post('create', [BookingController::class, 'store']);
     Route::post('confirm-store', [BookingController::class, 'confirmStore']);
 });
+Route::post('/pqrs', [\App\Http\Controllers\PqrsController::class, 'store'])->name('pqrs.store');
