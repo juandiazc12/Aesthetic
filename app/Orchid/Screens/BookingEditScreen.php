@@ -43,8 +43,8 @@ class BookingEditScreen extends Screen
                 'professional_name' => is_object($booking->professional) ? $booking->professional->name : 'Sin profesional',
                 'customer_name' => is_object($booking->customer) ? ($booking->customer->first_name ?? $booking->customer->name ?? 'Sin nombre') : 'Sin cliente',
                 'duration' => is_object($booking->service) ? $booking->service->duration : null,
-                'canCancel' => $booking->status === 'pending' && $scheduledAt->gt(Carbon::now('America/Bogota')->addHour()),
-                'canComplete' => $booking->status === 'pending' && $scheduledAt->lte(Carbon::now('America/Bogota')),
+                'canCancel' => $booking->status === 'pending' && $booking->scheduled_at && $scheduledAt->gt(Carbon::now('America/Bogota')->addHour()),
+                'canComplete' => $booking->status === 'pending' && $booking->scheduled_at && $scheduledAt->lte(Carbon::now('America/Bogota')),
             ],
         ];
     }
@@ -85,15 +85,21 @@ class BookingEditScreen extends Screen
             }
 
             if ($status === 'cancelled') {
-                $scheduledAt = Carbon::parse($booking->scheduled_at, 'America/Bogota');
-                if ($scheduledAt instanceof \Carbon\Carbon && Carbon::now('America/Bogota')->gte($scheduledAt->subHour())) {
+                $scheduledAt = $booking->scheduled_at ? Carbon::parse($booking->scheduled_at, 'America/Bogota') : null;
+                if (!$scheduledAt) {
+                    return response()->json(['error' => 'No se puede cancelar la cita: fecha no especificada.'], 400);
+                }
+                if (Carbon::now('America/Bogota')->gte($scheduledAt->subHour())) {
                     return response()->json(['error' => 'No se puede cancelar menos de 1 hora antes.'], 403);
                 }
             }
 
             if ($status === 'completed') {
-                $scheduledAt = Carbon::parse($booking->scheduled_at, 'America/Bogota');
-                if ($scheduledAt instanceof \Carbon\Carbon && Carbon::now('America/Bogota')->lt($scheduledAt)) {
+                $scheduledAt = $booking->scheduled_at ? Carbon::parse($booking->scheduled_at, 'America/Bogota') : null;
+                if (!$scheduledAt) {
+                    return response()->json(['error' => 'No se puede completar la cita: fecha no especificada.'], 400);
+                }
+                if (Carbon::now('America/Bogota')->lt($scheduledAt)) {
                     return response()->json(['error' => 'No se puede marcar como completada antes de la hora programada.'], 403);
                 }
             }
@@ -103,9 +109,20 @@ class BookingEditScreen extends Screen
                 $status === 'cancelled' ? 'cancelled_at' : 'completed_at' => Carbon::now('America/Bogota'),
             ]);
 
-            // Notificar al cliente si la cita es cancelada por el profesional
-            if ($status === 'cancelled' && $booking->customer) {
-                $booking->customer->notify(new \App\Notifications\BookingCancelled($booking, 'La cita fue cancelada por el profesional.'));
+            Log::info('Cita actualizada a estado: ' . $status);
+
+            if ($status === 'cancelled' && $booking->customer && $booking->customer->email) {
+                Log::info('Intentando enviar notificación al cliente: ' . $booking->customer->email);
+                try {
+                    $booking->customer->notify(new \App\Notifications\BookingCancelled($booking, 'La cita fue cancelada por el profesional.'));
+                    Log::info('Notificación enviada correctamente al cliente: ' . $booking->customer->email);
+                } catch (\Exception $e) {
+                    Log::error('Error al enviar notificación al cliente: ' . $e->getMessage(), [
+                        'trace' => $e->getTraceAsString(),
+                    ]);
+                }
+            } else {
+                Log::warning('No se envió notificación: cliente no encontrado o sin correo para la cita ID ' . $booking->id);
             }
 
             return response()->json([
@@ -114,7 +131,7 @@ class BookingEditScreen extends Screen
                 'redirect' => route('platform.dashboard')
             ]);
         } catch (\Exception $e) {
-            Log::error('Error in updateBookingStatus: ' . $e->getMessage(), [
+            Log::error('Error al actualizar la cita ID ' . $booking->id . ': ' . $e->getMessage(), [
                 'trace' => $e->getTraceAsString(),
             ]);
             return response()->json(['error' => 'Error al actualizar la cita: ' . $e->getMessage()], 500);
@@ -125,4 +142,5 @@ class BookingEditScreen extends Screen
     {
         return redirect()->route('platform.dashboard');
     }
+
 }

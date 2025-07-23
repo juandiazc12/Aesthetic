@@ -73,7 +73,7 @@
         .action-buttons button {
             padding: 0.75rem 1.5rem;
             border-radius: 0.5rem;
-            fontlicting: 0.95rem;
+            font-size: 0.95rem;
             font-weight: 600;
             text-transform: uppercase;
             transition: all 0.3s ease;
@@ -169,8 +169,8 @@
             <p><strong>Servicio:</strong> {{ $booking['service_name'] }}</p>
             <p><strong>Profesional:</strong> {{ $booking['professional_name'] }}</p>
             <p><strong>Cliente:</strong> {{ $booking['customer_name'] }}</p>
-            <p><strong>Fecha y Hora:</strong> {{ \Carbon\Carbon::parse($booking['scheduled_at'], 'America/Bogota')->format('d/m/Y H:i') }}</p>
-            <p><strong>Duración:</strong> {{ $booking['duration'] }} minutos</p>
+            <p><strong>Fecha y Hora:</strong> {{ $booking['scheduled_at'] ? \Carbon\Carbon::parse($booking['scheduled_at'], 'America/Bogota')->format('d/m/Y H:i') : 'No especificada' }}</p>
+            <p><strong>Duración:</strong> {{ $booking['duration'] ?? 'No especificada' }} minutos</p>
             <p><strong>Estado:</strong> {{ $booking['status_spanish'] ?? $booking['status'] }}</p>
             <p><strong>Monto Total:</strong> ${{ $booking['total_amount'] }}</p>
         </div>

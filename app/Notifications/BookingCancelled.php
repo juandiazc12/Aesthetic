@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Notifications;
 
 use App\Models\Booking;
@@ -15,7 +14,7 @@ class BookingCancelled extends Notification implements ShouldQueue
     protected $booking;
     protected $reason;
 
-    public function __construct(Booking $booking, $reason = null)
+    public function __construct(Booking $booking, $reason)
     {
         $this->booking = $booking;
         $this->reason = $reason;
@@ -28,10 +27,14 @@ class BookingCancelled extends Notification implements ShouldQueue
 
     public function toMail($notifiable)
     {
+        $scheduledAt = $this->booking->scheduled_at
+            ? \Carbon\Carbon::parse($this->booking->scheduled_at, 'America/Bogota')->format('d/m/Y H:i')
+            : 'No especificada';
+
         return (new MailMessage)
             ->subject('Cancelación de Cita - Aesthectic')
-            ->greeting('Estimado/a ' . $notifiable->first_name . ',')
-            ->line('Nos dirigimos a usted para informarle que su cita programada para el ' . $this->booking->appointment_date->format('d/m/Y') . ' a las ' . $this->booking->appointment_time . ' ha sido cancelada.')
+            ->greeting('Estimado/a ' . ($notifiable->first_name ?? $notifiable->name ?? 'Cliente') . ',')
+            ->line('Nos dirigimos a usted para informarle que su cita programada para el ' . $scheduledAt . ' ha sido cancelada.')
             ->lineIf($this->reason, 'Motivo de la cancelación: ' . $this->reason)
             ->line('Entendemos que esta situación puede generar inconvenientes y nos disculpamos sinceramente por ello.')
             ->line('Nuestro equipo está disponible para reprogramar su cita en el horario que mejor se adapte a sus necesidades.')
@@ -40,4 +43,12 @@ class BookingCancelled extends Notification implements ShouldQueue
             ->line('Agradecemos su comprensión y esperamos poder atenderle pronto.')
             ->salutation('Atentamente,<br>Equipo de Atención al Cliente<br>Aesthectic');
     }
-} 
+
+    public function toArray($notifiable)
+    {
+        return [
+            'booking_id' => $this->booking->id,
+            'message' => 'Tu cita ha sido cancelada: ' . $this->reason,
+        ];
+    }
+}
