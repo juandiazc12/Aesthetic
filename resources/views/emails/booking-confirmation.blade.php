@@ -1,8 +1,8 @@
 @component('mail::message')
 {{-- Header con logo --}}
 <div style="text-align: center; margin-bottom: 30px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 25px; border-radius: 12px; color: white;">
-    <img src="{{ asset('js/assets/logo.jpeg') }}" alt="Aesthectic" style="max-width: 120px; height: auto; margin-bottom: 10px;">
-    <h1 style="margin: 0; font-size: 24px; color: white;">¡Cita Confirmada!</h1>
+    <img src="{{ asset('js/assets/logo.png') }}" alt="Aesthectic" style="max-width: 120px; height: auto; margin-bottom: 10px;">
+    <h1 style="margin: 0;text-align:center; font-size: 24px; color: white;">¡Cita Confirmada!</h1>
 </div>
 
 # ¡Hola {{ $notifiable->first_name }}! 👋
@@ -63,7 +63,7 @@ Tu cita ha sido **confirmada exitosamente**. ¡Nos emociona verte pronto!
 
 <div style="text-align: center; color: #666; font-size: 12px;">
 ¿Tienes preguntas? Contáctanos:<br>
-📧 info@aesthectic.com | 📱 +57 XXX XXX XXXX
+📧 Aesthecticagenda@gmail.com | 📱 +57 321 770 6324
 </div>
 
 @endcomponent
