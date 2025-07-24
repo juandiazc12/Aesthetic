@@ -1,4 +1,6 @@
 import { Link, useForm, usePage } from "@inertiajs/react";
+import { router } from '@inertiajs/react';
+
 import { FormEvent, useState } from "react";
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
 
@@ -103,12 +105,12 @@ export default function Login() {
                                 </button>
                             </div>
                             <div className="text-center mt-4">
-                                <a
+                                <Link
                                     className="inline-flex items-center gap-x-1 text-sm text-blue-600 decoration-2 hover:underline focus:outline-none focus:underline font-medium dark:text-blue-500"
-                                    href="../examples/html/recover-account.html"
+                                    href="/customer/forgot-password"
                                 >
                                     ¿Has olvidado tu contraseña?
-                                </a>
+                                </Link>
 
                                 <p className="mt-2 text-sm text-gray-600 dark:text-neutral-400">
                                     ¿Aún no tienes una cuenta?

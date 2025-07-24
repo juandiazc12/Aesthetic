@@ -15,6 +15,7 @@ Route::get('/service/{slug}', [\App\Http\Controllers\Services::class, 'show'])->
 
 // Rutas de autenticación para clientes
 Route::middleware(['guest:customer'])->prefix('customer')->group(function () {
+    // Login/Register Routes
     Route::get('/login', function () {
         return Inertia::render('Customer/Login', []);
     })->name('customer.login');
@@ -22,6 +23,26 @@ Route::middleware(['guest:customer'])->prefix('customer')->group(function () {
     Route::get('/register', function () {
         return Inertia::render('Customer/Register', []);
     })->name('customer.register');
+    
+    // Password Reset Routes
+    Route::get('/forgot-password', function () {
+        return Inertia::render('Customer/ForgotPassword', [
+            'status' => session('status')
+        ]);
+    })->name('customer.password.request');
+
+    Route::post('/forgot-password', [\App\Http\Controllers\AuthController::class, 'sendResetLinkEmail'])
+        ->name('customer.password.email');
+
+    Route::get('/reset-password/{token}', function (string $token) {
+        return Inertia::render('Customer/ResetPassword', [
+            'token' => $token,
+            'email' => request('email')
+        ]);
+    })->name('customer.password.reset');
+
+    Route::post('/reset-password', [\App\Http\Controllers\AuthController::class, 'resetPassword'])
+        ->name('customer.password.update');
     
     Route::post('/register', [\App\Http\Controllers\AuthController::class, 'register'])->name('customer.register.post');
     Route::post('/login', [\App\Http\Controllers\AuthController::class, 'login'])->name('customer.login.post');

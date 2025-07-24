@@ -75,9 +75,10 @@ export default function BookingConfirmation() {
         {displayBooking.is_confirmed ? '¡Reserva confirmada!' : 'Confirmar Reserva'}
       </h1>
       <p>
-        {displayBooking.is_confirmed
-          ? 'Tu cita ha sido agendada correctamente.'
+      {displayBooking.is_confirmed
+          ? '¡Tu cita ha sido agendada correctamente! Por favor revisa la bandeja de entrada de tu correo electrónico para ver los detalles de tu cita. Allí encontrarás un enlace para agregarla a tu calendario y así no olvidarla.'
           : 'Revisa los detalles de tu reserva y confírmala.'}
+
       </p>
 
       <div className="text-left border p-4 rounded bg-gray-50">
