@@ -48,6 +48,27 @@ class Customer extends User
         return $this->name;
     }
 
+    /**
+     * Send the password reset notification.
+     *
+     * @param  string  $token
+     * @return void
+     */
+    public function sendPasswordResetNotification($token)
+    {
+        $this->notify(new \App\Notifications\CustomerResetPasswordNotification($token));
+    }
+
+    /**
+     * Get the email address that should be used for password reset.
+     *
+     * @return string
+     */
+    public function getEmailForPasswordReset()
+    {
+        return $this->email;
+    }
+
     // Método para verificar si tiene reservas activas
     public function hasActiveBookings()
     {
