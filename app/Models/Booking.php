@@ -43,7 +43,7 @@ class Booking extends Model
         return $this->belongsTo(Service::class);
     }
 
-     // Accessor para mostrar la fecha en zona horaria de Colombia
+    // Accessor para mostrar la fecha en zona horaria de Colombia
     public function getScheduledAtBogotaAttribute()
     {
         return $this->scheduled_at ? Carbon::parse($this->scheduled_at)->setTimezone('America/Bogota') : null;
@@ -84,7 +84,7 @@ class Booking extends Model
             'payment_id' => $paymentId,
             'payment_details' => $paymentDetails,
             'payment_completed_at' => now(),
-            'status' => 'confirmed', 
+            'status' => 'confirmed',
         ]);
     }
 
@@ -111,7 +111,7 @@ class Booking extends Model
     // Accessor para el estado de pago en español
     public function getPaymentStatusSpanishAttribute()
     {
-        return match($this->payment_status) {
+        return match ($this->payment_status) {
             'pending' => 'Pendiente',
             'paid' => 'Pagado',
             'failed' => 'Fallido',
@@ -131,4 +131,10 @@ class Booking extends Model
             default => $this->status,
         };
     }
+
+    public function rating()
+    {
+        return $this->hasOne(Rating::class);
+    }
+
 }

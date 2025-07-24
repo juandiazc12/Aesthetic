@@ -69,4 +69,10 @@ class Customer extends User
     {
         return $this->getAttribute($field);
     }
+
+    public function ratings()
+{
+    return $this->hasMany(Rating::class);
+}
+
 }

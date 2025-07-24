@@ -1,9 +1,11 @@
+// src/Pages/BookingList.tsx
 import { usePage } from "@inertiajs/react";
 import { Booking } from "@/Interfaces/Booking";
 import { getInitials } from "@/Pages/utils/helpers";
 import "@fortawesome/fontawesome-free/css/all.min.css";
 import React, { useState, useEffect } from "react";
 import EditBookingBanner from "@/Pages/components/EditBookingBanner";
+import RatingBanner from "@/Pages/components/RatingBanner"; // Import RatingBanner
 import { Link, router } from "@inertiajs/react";
 
 type Props = {
@@ -15,6 +17,7 @@ export default function BookingList() {
   const { bookings: initialBookings, customer, professionals, flash } = usePage<Props>().props;
   const [bookings, setBookings] = useState<Booking[]>(initialBookings);
   const [editBannerVisible, setEditBannerVisible] = useState(false);
+  const [ratingBannerBooking, setRatingBannerBooking] = useState<Booking | null>(null);
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [filters, setFilters] = useState({
@@ -121,7 +124,6 @@ export default function BookingList() {
         preserveScroll: true,
         onSuccess: () => {
           console.log("Reserva cancelada exitosamente");
-          // The bookings state will be updated via useEffect when initialBookings changes
         },
         onError: (errors) => {
           console.error("Error al cancelar la reserva:", errors);
@@ -141,15 +143,23 @@ export default function BookingList() {
     setSelectedBooking(null);
   };
 
- const handleSaveBooking = (updatedBooking: Booking) => {
-  setBookings((prevBookings) =>
-    prevBookings.map((booking) =>
-      booking.id === updatedBooking.id ? updatedBooking : booking
-    )
-  );
-  setEditBannerVisible(false);
-  setSelectedBooking(null);
-};
+  const handleSaveBooking = (updatedBooking: Booking) => {
+    setBookings((prevBookings) =>
+      prevBookings.map((booking) =>
+        booking.id === updatedBooking.id ? updatedBooking : booking
+      )
+    );
+    setEditBannerVisible(false);
+    setSelectedBooking(null);
+  };
+
+  const handleRateClick = (booking: Booking) => {
+    setRatingBannerBooking(booking);
+  };
+
+  const handleCloseRatingBanner = () => {
+    setRatingBannerBooking(null);
+  };
 
   const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
 
@@ -403,6 +413,7 @@ export default function BookingList() {
                       serviceImage: booking.service.image,
                     });
                     const canEditOrCancel = isActionDisabled(booking.scheduled_at, booking.status);
+                    const isCompleted = booking.status.toLowerCase() === "completed";
                     const statusClass = {
                       pending: "bg-yellow-200 text-yellow-800",
                       confirmed: "bg-blue-200 text-blue-800",
@@ -502,33 +513,45 @@ export default function BookingList() {
                         </td>
                         <td className="size-px whitespace-nowrap">
                           <div className="px-6 py-1.5">
-                            <a
-                              className={`inline-flex items-center gap-x-1 text-2xl text-blue-600 hover:text-blue-800 transition-all duration-300 transform hover:scale-110 ${
-                                canEditOrCancel ? "opacity-50 pointer-events-none" : ""
-                              }`}
-                              href="#"
-                              onClick={() => !canEditOrCancel && handleEditClick(booking)}
-                              title={canEditOrCancel ? "No editable (hora o estado)" : "Editar"}
-                            >
-                              <i className="fas fa-pencil-alt text-blue-600 hover:text-blue-800 transition-all duration-100 transform hover:scale-110"></i>
-                            </a>
+                            {!isCompleted && (
+                              <a
+                                className={`inline-flex items-center gap-x-1 text-2xl text-blue-600 hover:text-blue-800 transition-all duration-300 transform hover:scale-110 ${
+                                  canEditOrCancel ? "opacity-50 pointer-events-none" : ""
+                                }`}
+                                href="#"
+                                onClick={() => !canEditOrCancel && handleEditClick(booking)}
+                                title={canEditOrCancel ? "No editable (hora o estado)" : "Editar"}
+                              >
+                                <i className="fas fa-pencil-alt text-blue-600 hover:text-blue-800 transition-all duration-100 transform hover:scale-110"></i>
+                              </a>
+                            )}
                           </div>
                         </td>
                         <td className="size-px whitespace-nowrap">
                           <div className="px-6 py-1.5">
-                            <Link
-                              className={`inline-flex items-center gap-x-1 text-2xl text-red-600 hover:text-red-800 transition-all duration-100 transform hover:scale-110 ${
-                                canEditOrCancel ? "opacity-50 pointer-events-none" : ""
-                              }`}
-                              href="#"
-                              onClick={(e) => {
-                                e.preventDefault();
-                                if (!canEditOrCancel) cancelBooking(booking.id);
-                              }}
-                              title={canEditOrCancel ? "No cancelable (hora o estado)" : "Cancelar"}
-                            >
-                              <i className="fas fa-trash-alt text-red-600 hover:text-red-800 transition-all duration-50 transform hover:scale-110"></i>
-                            </Link>
+                            {!isCompleted ? (
+                              <Link
+                                className={`inline-flex items-center gap-x-1 text-2xl text-red-600 hover:text-red-800 transition-all duration-100 transform hover:scale-110 ${
+                                  canEditOrCancel ? "opacity-50 pointer-events-none" : ""
+                                }`}
+                                href="#"
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  if (!canEditOrCancel) cancelBooking(booking.id);
+                                }}
+                                title={canEditOrCancel ? "No cancelable (hora o estado)" : "Cancelar"}
+                              >
+                                <i className="fas fa-trash-alt text-red-600 hover:text-red-800 transition-all duration-50 transform hover:scale-110"></i>
+                              </Link>
+                            ) : (
+                              <button
+                                className="inline-flex items-center gap-x-1 text-2xl text-yellow-500 hover:text-yellow-600 transition-all duration-100 transform hover:scale-110"
+                                onClick={() => handleRateClick(booking)}
+                                title="Calificar servicio"
+                              >
+                                ⭐
+                              </button>
+                            )}
                           </div>
                         </td>
                       </tr>
@@ -605,6 +628,12 @@ export default function BookingList() {
           booking={selectedBooking}
           onClose={handleCloseBanner}
           onSave={handleSaveBooking}
+        />
+      )}
+      {ratingBannerBooking && (
+        <RatingBanner
+          booking={ratingBannerBooking}
+          onClose={handleCloseRatingBanner}
         />
       )}
     </div>

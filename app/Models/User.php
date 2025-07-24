@@ -43,8 +43,8 @@ class User extends Authenticatable
      * @var array
      */
     protected $casts = [
-        'permissions'          => 'array',
-        'email_verified_at'    => 'datetime',
+        'permissions' => 'array',
+        'email_verified_at' => 'datetime',
     ];
 
     /**
@@ -53,12 +53,12 @@ class User extends Authenticatable
      * @var array
      */
     protected $allowedFilters = [
-           'id'         => Where::class,
-           'photo'         => Where::class,
-           'name'       => Like::class,
-           'email'      => Like::class,
-           'updated_at' => WhereDateStartEnd::class,
-           'created_at' => WhereDateStartEnd::class,
+        'id' => Where::class,
+        'photo' => Where::class,
+        'name' => Like::class,
+        'email' => Like::class,
+        'updated_at' => WhereDateStartEnd::class,
+        'created_at' => WhereDateStartEnd::class,
     ];
 
     /**
@@ -74,19 +74,25 @@ class User extends Authenticatable
         'updated_at',
         'created_at',
     ];
-public function services()
-{
-    return $this->belongsToMany(Service::class, 'service_professional', 'professional_id', 'service_id');
-}
+    public function services()
+    {
+        return $this->belongsToMany(Service::class, 'service_professional', 'professional_id', 'service_id');
+    }
 
     public function servicesList()
     {
         return $this->belongsToMany(ServiceList::class, 'service_list_user', 'professional_id', 'service_list_id');
     }
 
-public function bookings()
-{
-    return $this->hasMany(Booking::class, 'professional_id');
-}
+    public function bookings()
+    {
+        return $this->hasMany(Booking::class, 'professional_id');
+    }
+
+    public function receivedRatings()
+    {
+        return $this->hasMany(Rating::class, 'professional_id');
+    }
+
 
 }

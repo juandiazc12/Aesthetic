@@ -6,7 +6,7 @@ use App\Http\Controllers\Services;
 use App\Http\Controllers\MercadoPagoController;
 use Inertia\Inertia;
 use App\Http\Controllers\PqrsController;
-
+use App\Http\Controllers\RatingController;
 
 
 
@@ -101,3 +101,6 @@ Route::prefix('api/booking')->group(function () {
     Route::post('confirm-store', [BookingController::class, 'confirmStore']);
 });
 Route::post('/pqrs', [\App\Http\Controllers\PqrsController::class, 'store'])->name('pqrs.store');
+
+
+Route::post('/ratings', [RatingController::class, 'store'])->middleware(['auth']);
