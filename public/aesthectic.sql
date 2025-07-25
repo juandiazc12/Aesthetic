@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 17-07-2025 a las 05:38:05
+-- Tiempo de generación: 24-07-2025 a las 22:17:21
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -143,6 +143,25 @@ CREATE TABLE `bookings` (
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+--
+-- Volcado de datos para la tabla `bookings`
+--
+
+INSERT INTO `bookings` (`id`, `customer_id`, `service_id`, `professional_id`, `scheduled_at`, `status`, `cancelled_at`, `completed_at`, `notes`, `total_amount`, `payment_preference_id`, `payment_id`, `payment_status`, `payment_details`, `payment_method`, `payment_completed_at`, `created_at`, `updated_at`) VALUES
+(52, 1, 37, 4, '2025-07-22 17:00:00', 'completed', NULL, '2025-07-22 22:37:50', NULL, 150000.00, NULL, 'cash_1753218458096', 'paid', NULL, 'efectivo', '2025-07-22 21:07:41', '2025-07-22 21:07:41', '2025-07-22 22:37:50'),
+(53, 1, 36, 7, '2025-07-22 17:00:00', 'completed', NULL, '2025-07-23 01:49:24', NULL, 60000.00, NULL, 'cash_1753218514960', 'paid', NULL, 'efectivo', '2025-07-22 21:08:39', '2025-07-22 21:08:39', '2025-07-23 01:49:24'),
+(54, 1, 35, 6, '2025-07-22 17:00:00', 'completed', NULL, '2025-07-22 22:01:15', NULL, 12000.00, NULL, 'cash_1753218561544', 'paid', NULL, 'efectivo', '2025-07-22 21:09:25', '2025-07-22 21:09:25', '2025-07-22 22:01:15'),
+(55, 1, 37, 8, '2025-07-23 07:00:00', 'cancelled', '2025-07-22 21:15:55', NULL, NULL, 150000.00, NULL, 'cash_1753218882352', 'paid', NULL, 'efectivo', '2025-07-22 21:14:45', '2025-07-22 21:14:45', '2025-07-22 21:15:55'),
+(56, 1, 26, 6, '2025-07-25 08:00:00', 'cancelled', '2025-07-22 21:17:28', NULL, NULL, 45000.00, NULL, 'cash_1753219007600', 'paid', NULL, 'efectivo', '2025-07-22 21:16:55', '2025-07-22 21:16:55', '2025-07-22 21:17:28'),
+(57, 1, 35, 6, '2025-07-26 16:00:00', 'cancelled', '2025-07-22 21:19:24', NULL, NULL, 12000.00, NULL, 'cash_1753219137264', 'paid', NULL, 'efectivo', '2025-07-22 21:19:02', '2025-07-22 21:19:02', '2025-07-22 21:19:24'),
+(58, 1, 35, 6, '2025-07-23 07:00:00', 'cancelled', '2025-07-22 21:22:06', NULL, NULL, 12000.00, NULL, 'cash_1753219295104', 'paid', NULL, 'efectivo', '2025-07-22 21:21:42', '2025-07-22 21:21:42', '2025-07-22 21:22:06'),
+(59, 1, 35, 6, '2025-07-24 07:00:00', 'cancelled', '2025-07-22 21:34:34', NULL, NULL, 12000.00, NULL, 'cash_1753219999808', 'paid', NULL, 'efectivo', '2025-07-22 21:33:37', '2025-07-22 21:33:37', '2025-07-22 21:34:34'),
+(60, 1, 37, 4, '2025-07-27 07:00:00', 'pending', NULL, NULL, NULL, 150000.00, NULL, 'cash_1753223462089', 'paid', NULL, 'efectivo', '2025-07-22 22:31:11', '2025-07-22 22:31:11', '2025-07-23 01:06:20'),
+(61, 1, 37, 4, '2025-07-23 10:00:00', 'cancelled', '2025-07-22 22:38:45', NULL, NULL, 150000.00, NULL, 'cash_1753223534976', 'paid', NULL, 'efectivo', '2025-07-22 22:32:18', '2025-07-22 22:32:18', '2025-07-22 22:38:45'),
+(62, 1, 9, 5, '2025-07-23 07:00:00', 'cancelled', '2025-07-23 01:29:26', NULL, NULL, 30000.00, NULL, 'cash_1753224143873', 'paid', NULL, 'efectivo', '2025-07-22 22:43:00', '2025-07-22 22:43:00', '2025-07-23 01:29:26'),
+(63, 1, 37, 7, '2025-07-23 07:00:00', 'cancelled', '2025-07-23 01:36:25', NULL, NULL, 150000.00, NULL, 'cash_1753226169089', 'paid', NULL, 'efectivo', '2025-07-22 23:16:13', '2025-07-22 23:16:13', '2025-07-23 01:36:25'),
+(64, 1, 37, 4, '2025-07-24 12:00:00', 'cancelled', '2025-07-23 01:48:07', NULL, NULL, 150000.00, NULL, 'cash_1753226267890', 'paid', NULL, 'efectivo', '2025-07-22 23:17:54', '2025-07-22 23:17:54', '2025-07-23 01:48:07');
+
 -- --------------------------------------------------------
 
 --
@@ -160,8 +179,8 @@ CREATE TABLE `cache` (
 --
 
 INSERT INTO `cache` (`key`, `value`, `expiration`) VALUES
-('aesthectic_cache_5c785c036466adea360111aa28563bfd556b5fba', 'i:1;', 1752716235),
-('aesthectic_cache_5c785c036466adea360111aa28563bfd556b5fba:timer', 'i:1752716235;', 1752716235);
+('aesthectic_cache_5c785c036466adea360111aa28563bfd556b5fba', 'i:1;', 1753386201),
+('aesthectic_cache_5c785c036466adea360111aa28563bfd556b5fba:timer', 'i:1753386201;', 1753386201);
 
 -- --------------------------------------------------------
 
@@ -196,6 +215,7 @@ CREATE TABLE `customers` (
   `profile_picture` varchar(255) DEFAULT NULL,
   `status` enum('active','suspended') NOT NULL DEFAULT 'active',
   `password` varchar(255) NOT NULL,
+  `remember_token` varchar(100) DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -204,12 +224,12 @@ CREATE TABLE `customers` (
 -- Volcado de datos para la tabla `customers`
 --
 
-INSERT INTO `customers` (`id`, `first_name`, `last_name`, `email`, `phone_number`, `address`, `city`, `state`, `postal_code`, `country`, `birth_date`, `profile_picture`, `status`, `password`, `created_at`, `updated_at`) VALUES
-(1, 'Jhon Deivis', 'Rivas Bermduez', 'rdeivis260502@gmail.com', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'active', '$2y$12$p/.D3Yw9Fpb7xkn7LR9XmOBsfg6XFrUqRtim7ZciAEgG3G1VNdXdi', '2025-07-10 04:33:06', '2025-07-10 04:33:06'),
-(2, 'Valentina', 'Moreno Ríos', 'valentina.moreno22@gmail.com', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'active', '$2y$12$uuaPn6xclicxC5WUSJBnMOPT1QURQkV2SWiswZyqg1LYwcXnRdoX.', '2025-07-17 03:33:56', '2025-07-17 03:33:56'),
-(3, 'Sebastián', 'Torres Martínez', 'sebastiantorres98@hotmail.com', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'active', '$2y$12$xxIgqsyHBoR97VcOsZY9kOMD/80eOc2JngM1YGQgRmCN2VcoIl1MK', '2025-07-17 03:34:30', '2025-07-17 03:34:30'),
-(4, 'Camila', 'Hernández López', 'camila.hernandez.lopez@gmail.com', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'active', '$2y$12$0BukWCwJPAyyN9rHTrOdBeFzO4Qa42KqkSp9KUfZFAkyRZ8N9Z7zW', '2025-07-17 03:35:09', '2025-07-17 03:35:09'),
-(5, 'Andrés Felipe', 'Gutiérrez', 'andres.felipe.gtz@yahoo.com', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'active', '$2y$12$kN0I5hC/v0q9Ii3L1XeOvuE3TJVpoTxJJMDMMkzOj7bRKV4epMn7K', '2025-07-17 03:36:06', '2025-07-17 03:36:06');
+INSERT INTO `customers` (`id`, `first_name`, `last_name`, `email`, `phone_number`, `address`, `city`, `state`, `postal_code`, `country`, `birth_date`, `profile_picture`, `status`, `password`, `remember_token`, `created_at`, `updated_at`) VALUES
+(1, 'Jhon Deivis', 'Rivas Bermduez', 'rdeivis260502@gmail.com', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'active', '$2y$12$RPFSXUnTLSvCWsmdiv/JCextWffxVcBjr6EhsPB/Cg/jbxLFzWRja', 'iEAHepp3fSxPMCJ9dU7AyZby5mKvHDarQG0X0ytiZeRxny58Q7YZcExw9eeA', '2025-07-10 04:33:06', '2025-07-24 19:46:23'),
+(2, 'Valentina', 'Moreno Ríos', 'valentina.moreno22@gmail.com', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'active', '$2y$12$uuaPn6xclicxC5WUSJBnMOPT1QURQkV2SWiswZyqg1LYwcXnRdoX.', NULL, '2025-07-17 03:33:56', '2025-07-17 03:33:56'),
+(3, 'Sebastián', 'Torres Martínez', 'sebastiantorres98@hotmail.com', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'active', '$2y$12$xxIgqsyHBoR97VcOsZY9kOMD/80eOc2JngM1YGQgRmCN2VcoIl1MK', NULL, '2025-07-17 03:34:30', '2025-07-17 03:34:30'),
+(4, 'Camila', 'Hernández López', 'camila.hernandez.lopez@gmail.com', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'active', '$2y$12$0BukWCwJPAyyN9rHTrOdBeFzO4Qa42KqkSp9KUfZFAkyRZ8N9Z7zW', NULL, '2025-07-17 03:35:09', '2025-07-17 03:35:09'),
+(5, 'Andrés Felipe', 'Gutiérrez', 'andres.felipe.gtz@yahoo.com', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'active', '$2y$12$kN0I5hC/v0q9Ii3L1XeOvuE3TJVpoTxJJMDMMkzOj7bRKV4epMn7K', NULL, '2025-07-17 03:36:06', '2025-07-17 03:36:06');
 
 -- --------------------------------------------------------
 
@@ -294,7 +314,10 @@ INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES
 (13, '2025_07_06_191045_create_service_profesional_table', 1),
 (14, '2025_07_09_040609_add_cancelled_at_to_bookings_table', 1),
 (15, '2025_07_10_212228_create_service_lists_table', 2),
-(16, '2025_07_13_175014_add_completed_at_to_bookings_table', 3);
+(16, '2025_07_13_175014_add_completed_at_to_bookings_table', 3),
+(17, '2025_07_23_222447_create_ratings_table', 4),
+(18, '2025_07_24_100434_create_password_reset_tokens_table', 5),
+(19, '2025_07_24_103630_add_remember_token_to_customers_table', 5);
 
 -- --------------------------------------------------------
 
@@ -313,6 +336,22 @@ CREATE TABLE `notifications` (
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+--
+-- Volcado de datos para la tabla `notifications`
+--
+
+INSERT INTO `notifications` (`id`, `type`, `notifiable_type`, `notifiable_id`, `data`, `read_at`, `created_at`, `updated_at`) VALUES
+('200aa7c7-a3d3-4d8c-a2c3-c63e66938ad1', 'App\\Notifications\\BookingUpdatedOrCancelled', 'App\\Models\\User', 6, '{\"title\":\"Cita editada\",\"message\":\"El cliente  ha editada una cita para el servicio \'Dise\\u00f1o de Cejas con Hilo\' programada el 24\\/07\\/2025 07:00\",\"booking_id\":50,\"timestamp\":\"2025-07-22T19:10:27.305270Z\"}', NULL, '2025-07-22 19:10:27', '2025-07-22 19:10:27'),
+('3a67a414-315b-41dc-a236-22dbdcba0505', 'App\\Notifications\\BookingUpdatedOrCancelled', 'App\\Models\\Customer', 1, '{\"title\":\"Cita editada\",\"message\":\"El cliente  ha editada una cita para el servicio \'Dise\\u00f1o de Cejas con Hilo\' programada el 30\\/07\\/2025 07:00\",\"booking_id\":50,\"timestamp\":\"2025-07-22T20:35:44.613573Z\"}', NULL, '2025-07-22 20:35:44', '2025-07-22 20:35:44'),
+('3a8feb99-6490-44e5-b99c-d9bf742b5bdd', 'App\\Notifications\\BookingUpdatedOrCancelled', 'App\\Models\\User', 4, '{\"title\":\"Cita editada\",\"message\":\"El cliente  ha editada una cita para el servicio \'Alisado Permanente\' programada el 23\\/07\\/2025 07:00\",\"booking_id\":49,\"timestamp\":\"2025-07-22T19:09:55.945674Z\"}', NULL, '2025-07-22 19:09:55', '2025-07-22 19:09:55'),
+('5b138b2d-5496-4830-921d-8608de5dd5ad', 'App\\Notifications\\BookingUpdatedOrCancelled', 'App\\Models\\Customer', 1, '{\"title\":\"Cita editada\",\"message\":\"El cliente  ha editada una cita para el servicio \'Dise\\u00f1o de Cejas con Hilo\' programada el 23\\/07\\/2025 07:00\",\"booking_id\":50,\"timestamp\":\"2025-07-22T19:03:14.263147Z\"}', NULL, '2025-07-22 19:03:14', '2025-07-22 19:03:14'),
+('6ec0eeba-c9da-4f38-a624-272030c3e06e', 'App\\Notifications\\BookingUpdatedOrCancelled', 'App\\Models\\Customer', 1, '{\"title\":\"Cita editada\",\"message\":\"El cliente  ha editada una cita para el servicio \'Dise\\u00f1o de Cejas con Hilo\' programada el 24\\/07\\/2025 07:00\",\"booking_id\":50,\"timestamp\":\"2025-07-22T19:10:27.036933Z\"}', NULL, '2025-07-22 19:10:27', '2025-07-22 19:10:27'),
+('7238e746-a3f9-4e07-87c3-7ade19fa8a9f', 'App\\Notifications\\BookingUpdatedOrCancelled', 'App\\Models\\Customer', 1, '{\"title\":\"Cita editada\",\"message\":\"El cliente  ha editada una cita para el servicio \'Alisado Permanente\' programada el 29\\/07\\/2025 07:00\",\"booking_id\":49,\"timestamp\":\"2025-07-22T19:04:37.139807Z\"}', NULL, '2025-07-22 19:04:37', '2025-07-22 19:04:37'),
+('96658476-7218-47cb-873a-80d8866b2ae3', 'App\\Notifications\\BookingUpdatedOrCancelled', 'App\\Models\\Customer', 1, '{\"title\":\"Cita editada\",\"message\":\"El cliente  ha editada una cita para el servicio \'Alisado Permanente\' programada el 23\\/07\\/2025 07:00\",\"booking_id\":49,\"timestamp\":\"2025-07-22T19:09:55.837519Z\"}', NULL, '2025-07-22 19:09:55', '2025-07-22 19:09:55'),
+('ad649e89-ba5a-47cc-90c2-609506f57ec1', 'App\\Notifications\\BookingUpdatedOrCancelled', 'App\\Models\\User', 6, '{\"title\":\"Cita editada\",\"message\":\"El cliente  ha editada una cita para el servicio \'Dise\\u00f1o de Cejas con Hilo\' programada el 30\\/07\\/2025 07:00\",\"booking_id\":50,\"timestamp\":\"2025-07-22T20:35:44.692965Z\"}', NULL, '2025-07-22 20:35:44', '2025-07-22 20:35:44'),
+('b6c13692-d759-4d20-9786-3ab9fcaf981d', 'App\\Notifications\\BookingUpdatedOrCancelled', 'App\\Models\\User', 6, '{\"title\":\"Cita editada\",\"message\":\"El cliente  ha editada una cita para el servicio \'Dise\\u00f1o de Cejas con Hilo\' programada el 23\\/07\\/2025 07:00\",\"booking_id\":50,\"timestamp\":\"2025-07-22T20:30:01.480544Z\"}', NULL, '2025-07-22 20:30:01', '2025-07-22 20:30:01'),
+('d3ca825d-8bc3-47d2-a995-5c8d9a73ea48', 'App\\Notifications\\BookingUpdatedOrCancelled', 'App\\Models\\Customer', 1, '{\"title\":\"Cita editada\",\"message\":\"El cliente  ha editada una cita para el servicio \'Dise\\u00f1o de Cejas con Hilo\' programada el 23\\/07\\/2025 07:00\",\"booking_id\":50,\"timestamp\":\"2025-07-22T20:30:01.214465Z\"}', NULL, '2025-07-22 20:30:01', '2025-07-22 20:30:01');
+
 -- --------------------------------------------------------
 
 --
@@ -323,6 +362,23 @@ CREATE TABLE `password_reset_tokens` (
   `email` varchar(255) NOT NULL,
   `token` varchar(255) NOT NULL,
   `created_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `ratings`
+--
+
+CREATE TABLE `ratings` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `booking_id` bigint(20) UNSIGNED NOT NULL,
+  `customer_id` bigint(20) UNSIGNED NOT NULL,
+  `professional_id` bigint(20) UNSIGNED NOT NULL,
+  `rating` tinyint(3) UNSIGNED NOT NULL,
+  `comment` text DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -346,7 +402,7 @@ CREATE TABLE `roles` (
 
 INSERT INTO `roles` (`id`, `slug`, `name`, `permissions`, `created_at`, `updated_at`) VALUES
 (1, 'admin', 'admin', '{\"platform.systems.roles\":\"1\",\"manage-services\":\"1\",\"platform.systems.users\":\"1\",\"platform.index\":\"1\",\"platform.systems.attachment\":\"1\"}', '2025-07-10 02:18:31', '2025-07-13 23:21:13'),
-(2, 'Profesional', 'Profesional', '{\"platform.systems.roles\":\"0\",\"manage-services\":\"0\",\"platform.systems.users\":\"0\",\"manage-services\\u00bf\":\"0\",\"platform.index\":\"1\",\"platform.systems.attachment\":\"1\"}', '2025-07-10 04:29:28', '2025-07-10 04:29:28');
+(2, 'profesional', 'profesional', '{\"platform.systems.roles\":\"0\",\"manage-services\":\"0\",\"platform.systems.users\":\"0\",\"platform.index\":\"1\",\"platform.systems.attachment\":\"1\"}', '2025-07-10 04:29:28', '2025-07-20 02:59:19');
 
 -- --------------------------------------------------------
 
@@ -425,7 +481,7 @@ INSERT INTO `services` (`id`, `name`, `description`, `image`, `price`, `duration
 (34, 'Barbería Premium', 'Corte, barba, cejas y vapor', '/storage/2025/07/16/ab376ec592a7f012b06ee82c7ee1a1aa465f3795.jpg', 45000.00, '60', 'active', NULL, 1, '2025-07-17 03:22:08', '2025-07-17 03:22:08'),
 (35, 'Diseño de Cejas con Hilo', 'Definición precisa con hilo', '/storage/2025/07/16/3b25f7233bb241717988f83cc62110a5eb7aff9d.jpg', 12000.00, '20', 'active', NULL, 1, '2025-07-17 03:23:14', '2025-07-17 03:23:14'),
 (36, 'Maquillaje para Evento', 'Profesional para eventos especiales', '/storage/2025/07/16/834d985aa27729e3dd0ad7f6a146a080bab4d70a.jpg', 60000.00, '60', 'active', NULL, 1, '2025-07-17 03:23:59', '2025-07-17 03:23:59'),
-(37, 'Alisado Permanente', 'Cambio estructural del cabello', '/storage/2025/07/16/28ee65ae88a75fcd867027c9880c8373d3afee03.png', 150000.00, '120', 'active', NULL, 1, '2025-07-17 03:25:57', '2025-07-17 03:25:57');
+(37, 'Alisado Permanente', 'Cambio estructural del cabello', '/storage/2025/07/16/28ee65ae88a75fcd867027c9880c8373d3afee03.png', 150000.00, '120', 'active', NULL, 1, '2025-07-17 03:25:57', '2025-07-20 02:41:39');
 
 -- --------------------------------------------------------
 
@@ -525,7 +581,9 @@ INSERT INTO `service_list_user` (`id`, `service_list_id`, `professional_id`, `cr
 (45, 35, 8, NULL, NULL),
 (46, 34, 8, NULL, NULL),
 (47, 33, 8, NULL, NULL),
-(48, 36, 8, NULL, NULL);
+(48, 36, 8, NULL, NULL),
+(49, 42, 7, NULL, NULL),
+(50, 42, 8, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -617,12 +675,12 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`id`, `photo`, `name`, `email`, `email_verified_at`, `password`, `remember_token`, `created_at`, `updated_at`, `permissions`) VALUES
-(1, NULL, 'JuanDiaz1', 'Juandiaz@admin.com', NULL, '$2y$12$Q66e6LXMo4GXZBidERLIb.E2sCPgpmEXX5rf9.N8bUio/fc1145xy', 'lH2h2VX6505T1RR6AOKBGaLSO5XX89cyzUiIYuqLkdfKtbPkUJH6DGzDfGN8', '2025-07-10 02:05:50', '2025-07-10 02:18:59', '[]'),
-(4, '/storage/2025/07/16/4432d9eb4f5129557a842dc3c036d1dad128cc9b.avif', 'Laura Gómez', 'LauraGomez@profesional.com', NULL, '$2y$12$fx1D6XLHi0Q3ek0FG0Q4u.R780/W7lDQODYiz8nYpY9Kxscs3.c7.', NULL, '2025-07-17 02:17:37', '2025-07-17 02:23:53', '[]'),
-(5, '/storage/2025/07/16/545d0bb4a2a5ea558b74e980c6a91cc3de483b65.avif', 'Carlos Torres', 'CarlosTorres@profesional.com', NULL, '$2y$12$1mmqzru0eeLYHTqcDEiTQe5H5A6PuHPx/ja5yau7ZLWyI5oYRJGFC', NULL, '2025-07-17 02:25:22', '2025-07-17 02:25:22', '[]'),
-(6, '/storage/2025/07/16/e5b08acfd6874790252038de50870009052f77d8.png', 'Mariana Pérez', 'MarianaPerez@profesional.com', NULL, '$2y$12$N0qxusn.SnRZFxnw5KQc9uP2Rs66bCHcTiU0nrLs/bU2nIyEY487i', NULL, '2025-07-17 02:28:16', '2025-07-17 02:28:16', '[]'),
+(1, NULL, 'JuanDiaz1', 'Juandiaz@admin.com', NULL, '$2y$12$Q66e6LXMo4GXZBidERLIb.E2sCPgpmEXX5rf9.N8bUio/fc1145xy', 'Vq0aaZo13LuufO9abdWMiifmOZGIAHxXd4ksPGweGEL7wYEHuPdCdTEooTDC', '2025-07-10 02:05:50', '2025-07-10 02:18:59', '[]'),
+(4, '/storage/2025/07/16/4432d9eb4f5129557a842dc3c036d1dad128cc9b.avif', 'Laura Gómez', 'LauraGomez@profesional.com', NULL, '$2y$12$fx1D6XLHi0Q3ek0FG0Q4u.R780/W7lDQODYiz8nYpY9Kxscs3.c7.', 'QAEMz4SB8OIrIpqVPoJMvCMhReLRsZhFwZReHeaS78fYbZhxamRUY2Zp8mTF', '2025-07-17 02:17:37', '2025-07-17 02:23:53', '[]'),
+(5, '/storage/2025/07/16/545d0bb4a2a5ea558b74e980c6a91cc3de483b65.avif', 'Carlos Torres', 'CarlosTorres@profesional.com', NULL, '$2y$12$1mmqzru0eeLYHTqcDEiTQe5H5A6PuHPx/ja5yau7ZLWyI5oYRJGFC', 'FqPG3UKtJOPHdwVfclMuNICh6EX2rdE4nt1vpIwdrC8mI86gbBLWPT4X8nKw', '2025-07-17 02:25:22', '2025-07-17 02:25:22', '[]'),
+(6, '/storage/2025/07/16/e5b08acfd6874790252038de50870009052f77d8.png', 'Mariana Pérez', 'MarianaPerez@profesional.com', NULL, '$2y$12$N0qxusn.SnRZFxnw5KQc9uP2Rs66bCHcTiU0nrLs/bU2nIyEY487i', 'cgnJtAFSVSpgjLz812SAyOPYRwg6fZ3LSkg4wEi5qajIElut8VglzW4yxugp', '2025-07-17 02:28:16', '2025-07-17 02:28:16', '[]'),
 (7, '/storage/2025/07/16/27449531723c8b2cec6be634b74a14d812f7ef8f.png', 'Andrés Rojas', 'AndresRojas@profesional.com', NULL, '$2y$12$9ipkQACdGN8j7HqZTZ8/8ethGYEqj/jv1HIIXBii6hVRLaPREfml.', NULL, '2025-07-17 02:34:07', '2025-07-17 02:34:07', '[]'),
-(8, '/storage/2025/07/16/4572737a093c74386c53a855b94f3bd2329f76fc.png', 'Luisa Martínez', 'LuisaMartinez@profesional.com', NULL, '$2y$12$UB4YBWxLe9Q01XJ0.PTmju2K.gzpezZrPxovBfOHGKppApJGCZHdG', NULL, '2025-07-17 02:35:53', '2025-07-17 02:35:53', '[]');
+(8, '/storage/2025/07/16/4572737a093c74386c53a855b94f3bd2329f76fc.png', 'Luisa Martínez', 'LuisaMartinez@profesional.com', NULL, '$2y$12$UB4YBWxLe9Q01XJ0.PTmju2K.gzpezZrPxovBfOHGKppApJGCZHdG', 'QawGg9XbuWZt5usM8MVzPGL34P44HvwfVZCu4VWcqRNReEsd2c2ASU7IkUuJ', '2025-07-17 02:35:53', '2025-07-17 02:35:53', '[]');
 
 --
 -- Índices para tablas volcadas
@@ -710,6 +768,15 @@ ALTER TABLE `password_reset_tokens`
   ADD PRIMARY KEY (`email`);
 
 --
+-- Indices de la tabla `ratings`
+--
+ALTER TABLE `ratings`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `ratings_booking_id_foreign` (`booking_id`),
+  ADD KEY `ratings_customer_id_foreign` (`customer_id`),
+  ADD KEY `ratings_professional_id_foreign` (`professional_id`);
+
+--
 -- Indices de la tabla `roles`
 --
 ALTER TABLE `roles`
@@ -788,7 +855,7 @@ ALTER TABLE `attachments`
 -- AUTO_INCREMENT de la tabla `bookings`
 --
 ALTER TABLE `bookings`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=18;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=65;
 
 --
 -- AUTO_INCREMENT de la tabla `customers`
@@ -812,7 +879,13 @@ ALTER TABLE `jobs`
 -- AUTO_INCREMENT de la tabla `migrations`
 --
 ALTER TABLE `migrations`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=20;
+
+--
+-- AUTO_INCREMENT de la tabla `ratings`
+--
+ALTER TABLE `ratings`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT de la tabla `roles`
@@ -836,7 +909,7 @@ ALTER TABLE `service_lists`
 -- AUTO_INCREMENT de la tabla `service_list_user`
 --
 ALTER TABLE `service_list_user`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=49;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=51;
 
 --
 -- AUTO_INCREMENT de la tabla `service_professional`
@@ -867,6 +940,14 @@ ALTER TABLE `bookings`
   ADD CONSTRAINT `bookings_customer_id_foreign` FOREIGN KEY (`customer_id`) REFERENCES `customers` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `bookings_professional_id_foreign` FOREIGN KEY (`professional_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `bookings_service_id_foreign` FOREIGN KEY (`service_id`) REFERENCES `services` (`id`) ON DELETE CASCADE;
+
+--
+-- Filtros para la tabla `ratings`
+--
+ALTER TABLE `ratings`
+  ADD CONSTRAINT `ratings_booking_id_foreign` FOREIGN KEY (`booking_id`) REFERENCES `bookings` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `ratings_customer_id_foreign` FOREIGN KEY (`customer_id`) REFERENCES `customers` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `ratings_professional_id_foreign` FOREIGN KEY (`professional_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
 
 --
 -- Filtros para la tabla `role_users`

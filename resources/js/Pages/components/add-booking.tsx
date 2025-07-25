@@ -21,6 +21,8 @@ interface Professional {
   photo: string;
   name: string;
   email: string;
+  average_rating?: number | null;
+  ratings_count?: number;
 }
 
 interface TimeSlots {
@@ -243,7 +245,7 @@ export default function AddBooking({ service }: ComponentProps) {
       }
 
       // Redirigir a página de éxito
-      router.visit('/booking/success');
+      router.visit('/payment/success');
     } catch (error) {
       console.error('Error creating booking:', error);
       setError(error instanceof Error ? error.message : 'Error al procesar la reserva');
@@ -303,38 +305,48 @@ export default function AddBooking({ service }: ComponentProps) {
           <div className="grid gap-3">
             {professionals.map((professional) => (
               <button
-                key={professional.id}
-                className={`flex items-center gap-3 p-3 rounded-lg border transition-colors ${
-                  professionalId === professional.id
-                    ? "bg-blue-500 text-white border-blue-500"
-                    : "bg-white hover:bg-gray-50 border-gray-200"
-                }`}
-                onClick={() => handleProfessionalSelection(professional.id)}
-              >
-                <div
-                  className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                    professionalId === professional.id
-                      ? "bg-blue-700 text-white"
-                      : "bg-gray-100"
-                  }`}
-                >
-                  {professional.photo ? (
-                    <img
-                      src={professional.photo}
-                      alt={professional.name}
-                      className="w-10 h-10 rounded-full object-cover"
-                    />
-                  ) : (
-                    <span className="text-sm font-medium">
-                      {getInitials(professional.name)}
-                    </span>
-                  )}
-                </div>
-                <div className="text-left">
-                  <div className="font-medium">{professional.name}</div>
-                  <div className="text-sm opacity-75">{professional.email}</div>
-                </div>
-              </button>
+  key={professional.id}
+  className={`flex items-center justify-between gap-3 p-3 rounded-lg border transition-colors ${
+    professionalId === professional.id
+      ? "bg-blue-500 text-white border-blue-500"
+      : "bg-white hover:bg-gray-50 border-gray-200"
+  }`}
+  onClick={() => handleProfessionalSelection(professional.id)}
+>
+  <div className="flex items-center gap-3">
+    <div
+      className={`w-10 h-10 rounded-full flex items-center justify-center ${
+        professionalId === professional.id
+          ? "bg-blue-700 text-white"
+          : "bg-gray-100"
+      }`}
+    >
+      {professional.photo ? (
+        <img
+          src={professional.photo}
+          alt={professional.name}
+          className="w-10 h-10 rounded-full object-cover"
+        />
+      ) : (
+        <span className="text-sm font-medium">
+          {getInitials(professional.name)}
+        </span>
+      )}
+    </div>
+    <div className="text-left">
+      <div className="font-medium">{professional.name}</div>
+      <div className="text-sm opacity-75">{professional.email}</div>
+    </div>
+  </div>
+  <div className="flex items-center gap-1 min-w-[52px] justify-end">
+    {typeof professional.average_rating === 'number' && (
+      <>
+        <svg className="w-5 h-5 text-yellow-400 inline-block" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.967a1 1 0 00.95.69h4.175c.969 0 1.371 1.24.588 1.81l-3.38 2.455a1 1 0 00-.364 1.118l1.287 3.966c.3.922-.755 1.688-1.54 1.118l-3.38-2.454a1 1 0 00-1.176 0l-3.38 2.454c-.785.57-1.84-.196-1.54-1.118l1.287-3.966a1 1 0 00-.364-1.118L2.05 9.394c-.783-.57-.38-1.81.588-1.81h4.175a1 1 0 00.95-.69l1.286-3.967z"/></svg>
+        <span className="font-semibold text-yellow-700 text-sm">{professional.average_rating}</span>
+      </>
+    )}
+  </div>
+</button>
             ))}
           </div>
         )}

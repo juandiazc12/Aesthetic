@@ -53,7 +53,7 @@ class RatingController extends Controller
 
         $rating = Rating::create([
             'booking_id' => $booking->id,
-            'user_id' => $booking->user_id, // profesional a quien se califica
+            'professional_id' => $booking->professional_id, // profesional a quien se califica
             'customer_id' => $customer->id,
             'rating' => $validated['rating'],
             'comment' => $validated['comment'],
@@ -62,7 +62,7 @@ class RatingController extends Controller
         Log::info('Calificación guardada exitosamente', [
             'rating_id' => $rating->id,
             'booking_id' => $booking->id,
-            'user_id' => $booking->user_id,
+            'professional_id' => $booking->professional_id,
             'customer_id' => $customer->id,
         ]);
 

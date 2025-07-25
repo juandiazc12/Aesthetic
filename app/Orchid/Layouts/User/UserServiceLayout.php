@@ -18,8 +18,7 @@ class UserServiceLayout extends Rows
             Select::make('user.servicesList.')
                 ->fromModel(ServiceList::class, 'name')
                 ->multiple()
-                ->title('Servicios')
-                ->required(),
+                ->title('Servicios'),
         ];
     }
 }

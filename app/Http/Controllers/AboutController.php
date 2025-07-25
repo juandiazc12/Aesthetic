@@ -36,13 +36,17 @@ class AboutController extends Controller
             ->get()
             ->map(function ($user) {
                 $services = $user->services->pluck('name')->toArray();
-                return [
-                    'name' => $user->name,
-                    'role' => 'Especialista',
-                    'image' => $user->photo,
-                    'experience' => 'Especialista en medicina estética',
-                    'services' => $services,
-                ];
+                $averageRating = $user->receivedRatings()->avg('rating');
+$ratingsCount = $user->receivedRatings()->count();
+return [
+    'name' => $user->name,
+    'role' => 'Especialista',
+    'image' => $user->photo,
+    'experience' => 'Especialista en medicina estética',
+    'services' => $services,
+    'average_rating' => $averageRating ? round($averageRating, 1) : null,
+    'ratings_count' => $ratingsCount,
+];
             });
 
             // Combinar administradores y profesionales

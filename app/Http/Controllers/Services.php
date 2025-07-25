@@ -67,11 +67,15 @@ class Services extends Controller
                 'updated_at' => $service->updated_at->format('Y-m-d H:i:s'),
             ],
             'professionals' => $professionals->map(function ($professional) {
+                $averageRating = $professional->receivedRatings()->avg('rating');
+                $ratingsCount = $professional->receivedRatings()->count();
                 return [
                     'id' => $professional->id,
                     'name' => $professional->name,
                     'email' => $professional->email,
                     'photo' => $professional->photo,
+                    'average_rating' => $averageRating ? round($averageRating, 1) : null,
+                    'ratings_count' => $ratingsCount,
                 ];
             }), 
         ]);

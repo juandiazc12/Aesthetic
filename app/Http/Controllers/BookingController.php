@@ -6,6 +6,8 @@ use App\Models\Booking;
 use App\Models\ServiceList;
 use App\Models\User;
 use App\Notifications\BookingConfirmation;
+use App\Notifications\ProfessionalBookingEdited;
+use App\Notifications\ProfessionalBookingCancelled;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -596,26 +598,43 @@ class BookingController extends Controller
                     'booking_id' => $booking->id,
                     'scheduled_at' => $booking->scheduled_at,
                     'now' => $now,
-                ]);
-                return redirect()->route('booking.BookingList')->with('error', 'No se puede cancelar la reserva menos de 1 hora antes del servicio');
-            }
-
-            $booking->update([
-                'status' => 'cancelled',
-                'cancelled_at' => Carbon::now('America/Bogota')->toDateTimeString(),
             ]);
-
-            $booking->customer->notify(new \App\Notifications\BookingCancelled($booking, 'La cita fue cancelada por el cliente.'));
-
-            Log::info('Booking cancelled', ['booking_id' => $booking->id]);
-
-            return redirect()->route('booking.BookingList')->with('success', 'Reserva cancelada exitosamente');
-
-        } catch (\Exception $e) {
-            Log::error('Error cancelling booking: ' . $e->getMessage());
-            return redirect()->route('booking.BookingList')->with('error', 'Error al cancelar la reserva: ' . $e->getMessage());
+            return redirect()->route('booking.BookingList')->with('error', 'No se puede cancelar la reserva menos de 1 hora antes del servicio');
         }
+
+        $booking->update([
+            'status' => 'cancelled',
+            'cancelled_at' => Carbon::now('America/Bogota')->toDateTimeString(),
+        ]);
+
+        // Enviar notificación de cancelación al cliente
+        try {
+            $booking->customer->notify(new \App\Notifications\BookingCancelled($booking, 'La cita fue cancelada por el cliente.'));
+        } catch (\Exception $e) {
+            Log::warning('Failed to send BookingCancelled notification to customer: ' . $e->getMessage());
+        }
+
+        // Enviar notificación de cancelación al profesional
+        try {
+            $booking->professional->notify(new ProfessionalBookingCancelled($booking, 'Cancelada por el cliente'));
+            Log::info('Professional notified about booking cancellation', [
+                'booking_id' => $booking->id,
+                'professional_id' => $booking->professional_id,
+                'professional_email' => $booking->professional->email,
+            ]);
+        } catch (\Exception $e) {
+            Log::warning('Failed to send ProfessionalBookingCancelled notification: ' . $e->getMessage());
+        }
+
+        Log::info('Booking cancelled', ['booking_id' => $booking->id]);
+
+        return redirect()->route('booking.BookingList')->with('success', 'Reserva cancelada exitosamente');
+
+    } catch (\Exception $e) {
+        Log::error('Error cancelling booking: ' . $e->getMessage());
+        return redirect()->route('booking.BookingList')->with('error', 'Error al cancelar la reserva: ' . $e->getMessage());
     }
+}
 
     public function update(Request $request, $id)
     {
@@ -712,11 +731,23 @@ class BookingController extends Controller
                 'status' => 'pending',
             ]);
 
-            // Enviar notificación de edición
+            // Enviar notificación de edición al cliente
             try {
                 $booking->customer->notify(new \App\Notifications\BookingEdited($booking));
             } catch (\Exception $e) {
-                Log::warning('Failed to send BookingEdited notification: ' . $e->getMessage());
+                Log::warning('Failed to send BookingEdited notification to customer: ' . $e->getMessage());
+            }
+
+            // Enviar notificación de edición al profesional
+            try {
+                $booking->professional->notify(new ProfessionalBookingEdited($booking));
+                Log::info('Professional notified about booking edit', [
+                    'booking_id' => $booking->id,
+                    'professional_id' => $booking->professional_id,
+                    'professional_email' => $booking->professional->email,
+                ]);
+            } catch (\Exception $e) {
+                Log::warning('Failed to send ProfessionalBookingEdited notification: ' . $e->getMessage());
             }
 
             Log::info('Booking updated successfully', [
@@ -736,7 +767,7 @@ class BookingController extends Controller
                 'errors' => $e->errors(),
                 'request_data' => $request->all(),
             ]);
-            return back()->withErrors($e->errors())->withInput();
+                       return back()->withErrors($e->errors())->withInput();
         } catch (\Exception $e) {
             Log::error('Error updating booking: ' . $e->getMessage(), [
                 'booking_id' => $id,
