@@ -62,7 +62,7 @@ Route::middleware(['auth:customer'])->group(function () {
     // Páginas principales
     Route::get('/booking/{service?}', [BookingController::class, 'show'])->name('booking.show');
     Route::get('/booking/{booking}/confirmation', [BookingController::class, 'confirmation'])->name('booking.confirmation');
-    Route::get('/bookingList', [BookingController::class, 'list'])->name('booking.BookingList');
+    Route::get('/bookingList', [BookingController::class, 'list'])->name('booking.bookingList');
     
     // APIs para crear y confirmar reservas
     Route::post('/booking', [BookingController::class, 'store'])->name('booking.store');

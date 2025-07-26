@@ -565,7 +565,7 @@ class BookingController extends Controller
                 ];
             });
 
-        return Inertia::render('Booking/BookingList', [
+        return Inertia::render('Booking/bookingList', [
             'bookings' => $bookings,
             'customer' => Auth::guard('customer')->user(),
         ]);
@@ -574,7 +574,7 @@ class BookingController extends Controller
             'customer_id' => Auth::guard('customer')->id(),
             'trace' => $e->getTraceAsString(),
         ]);
-        return Inertia::render('Booking/BookingList', [
+        return Inertia::render('Booking/bookingList', [
             'bookings' => [],
             'customer' => Auth::guard('customer')->user(),
             'error' => 'Error al cargar las reservas: ' . $e->getMessage(),
@@ -599,7 +599,7 @@ class BookingController extends Controller
                     'scheduled_at' => $booking->scheduled_at,
                     'now' => $now,
             ]);
-            return redirect()->route('booking.BookingList')->with('error', 'No se puede cancelar la reserva menos de 1 hora antes del servicio');
+            return redirect()->route('booking.bookingList')->with('error', 'No se puede cancelar la reserva menos de 1 hora antes del servicio');
         }
 
         $booking->update([
@@ -628,11 +628,11 @@ class BookingController extends Controller
 
         Log::info('Booking cancelled', ['booking_id' => $booking->id]);
 
-        return redirect()->route('booking.BookingList')->with('success', 'Reserva cancelada exitosamente');
+        return redirect()->route('booking.bookingList')->with('success', 'Reserva cancelada exitosamente');
 
     } catch (\Exception $e) {
         Log::error('Error cancelling booking: ' . $e->getMessage());
-        return redirect()->route('booking.BookingList')->with('error', 'Error al cancelar la reserva: ' . $e->getMessage());
+        return redirect()->route('booking.bookingList')->with('error', 'Error al cancelar la reserva: ' . $e->getMessage());
     }
 }
 
@@ -660,7 +660,7 @@ class BookingController extends Controller
                     'scheduled_at' => $booking->scheduled_at,
                     'now' => $now,
                 ]);
-                return Inertia::render('Booking/BookingList', [
+                return Inertia::render('Booking/bookingList', [
                     'bookings' => $this->getMappedBookings(),
                     'customer' => Auth::guard('customer')->user(),
                     'error' => 'No se puede editar la reserva menos de 1 hora antes del servicio',
@@ -685,7 +685,7 @@ class BookingController extends Controller
                         'service_id' => $request->service_id,
                         'professional_id' => $booking->professional_id,
                     ]);
-                    return Inertia::render('Booking/BookingList', [
+                    return Inertia::render('Booking/bookingList', [
                         'bookings' => $this->getMappedBookings(),
                         'customer' => Auth::guard('customer')->user(),
                         'error' => 'El profesional asignado no ofrece este servicio',
@@ -699,7 +699,7 @@ class BookingController extends Controller
                     'booking_id' => $booking->id,
                     'new_scheduled_at' => $request->scheduled_at,
                 ]);
-                return Inertia::render('Booking/BookingList', [
+                return Inertia::render('Booking/bookingList', [
                     'bookings' => $this->getMappedBookings(),
                     'customer' => Auth::guard('customer')->user(),
                     'error' => 'La fecha y hora seleccionada ya pasó',
@@ -718,7 +718,7 @@ class BookingController extends Controller
                     'new_scheduled_at' => $newScheduledAt,
                     'existing_booking_id' => $existingBooking->id,
                 ]);
-                return Inertia::render('Booking/BookingList', [
+                return Inertia::render('Booking/bookingList', [
                     'bookings' => $this->getMappedBookings(),
                     'customer' => Auth::guard('customer')->user(),
                     'error' => 'El horario ya está ocupado',
@@ -756,7 +756,7 @@ class BookingController extends Controller
                 'scheduled_at' => $newScheduledAt->toDateTimeString(),
             ]);
 
-            return Inertia::render('Booking/BookingList', [
+            return Inertia::render('Booking/bookingList', [
                 'bookings' => $this->getMappedBookings(),
                 'customer' => Auth::guard('customer')->user(),
                 'success' => 'Reserva actualizada exitosamente',
@@ -774,7 +774,7 @@ class BookingController extends Controller
                 'request_data' => $request->all(),
                 'trace' => $e->getTraceAsString(),
             ]);
-            return Inertia::render('Booking/BookingList', [
+            return Inertia::render('Booking/bookingList', [
                 'bookings' => $this->getMappedBookings(),
                 'customer' => Auth::guard('customer')->user(),
                 'error' => 'Error al actualizar la reserva: ' . $e->getMessage(),
