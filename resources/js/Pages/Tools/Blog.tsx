@@ -35,13 +35,13 @@ export default function Blog() {
   return (
     
       <>
-        <Head title="Blog - AESTHECTIC" />
+        <Head title="Blog - AESTHETIC" />
         
         <div className="max-w-6xl mx-auto py-8">
           {/* Header */}
           <div className="text-center mb-12">
             <h1 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-4">
-              Blog AESTHECTIC
+              Blog AESTHETIC
             </h1>
             <p className="text-lg text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
               Mantente al día con las últimas tendencias, consejos y novedades del mundo de la estética

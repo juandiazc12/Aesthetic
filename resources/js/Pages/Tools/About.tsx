@@ -4,7 +4,7 @@ import { Head } from "@inertiajs/react";
 export default function About({ team, values }) {
   return (
     <>
-      <Head title="Quiénes Somos - AESTHECTIC" />
+      <Head title="Quiénes Somos - AESTHETIC" />
 
       <Layout>
         <div className="max-w-6xl mx-auto py-8">
@@ -14,7 +14,7 @@ export default function About({ team, values }) {
               Quiénes Somos
             </h1>
             <p className="text-xl text-gray-600 dark:text-gray-300 max-w-4xl mx-auto leading-relaxed">
-              En AESTHECTIC, somos pioneros en medicina estética, dedicados a realzar tu belleza natural
+              En AESTHETIC, somos pioneros en medicina estética, dedicados a realzar tu belleza natural
               con los más altos estándares de calidad y profesionalismo.
             </p>
           </div>
@@ -119,7 +119,7 @@ export default function About({ team, values }) {
             </h2>
             <div className="max-w-4xl mx-auto">
               <p className="text-gray-600 dark:text-gray-300 leading-relaxed mb-4">
-                AESTHECTIC nació en 2015 con la visión de revolucionar el mundo de la medicina estética
+                AESTHETIC nació en 2015 con la visión de revolucionar el mundo de la medicina estética
                 en Colombia. Fundada por un equipo de profesionales médicos especializados, nuestra clínica
                 ha crecido para convertirse en un referente en tratamientos estéticos de alta calidad.
               </p>
@@ -129,7 +129,7 @@ export default function About({ team, values }) {
                 en constante formación para ofrecer las técnicas más avanzadas y seguras del mercado.
               </p>
               <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
-                Hoy en día, AESTHECTIC continúa expandiéndose y mejorando, siempre con el objetivo
+                Hoy en día, AESTHETIC continúa expandiéndose y mejorando, siempre con el objetivo
                 de brindar a nuestros pacientes la mejor experiencia en medicina estética.
               </p>
             </div>

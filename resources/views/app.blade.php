@@ -6,7 +6,7 @@
 <meta name="csrf-token" content="{{ csrf_token() }}">
 <link rel="icon" href="{{ asset('favicon.ico') }}" type="image/x-icon">
 
-    <title>Aesthectic</title>
+    <title>Aesthetic</title>
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.bunny.net">

@@ -5,7 +5,7 @@ export default function Terms() {
   return (
   
       <>
-        <Head title="Términos y Condiciones - AESTHECTIC" />
+        <Head title="Términos y Condiciones - AESTHETIC" />
         
         <div className="max-w-4xl mx-auto py-8">
           {/* Header */}
@@ -27,7 +27,7 @@ export default function Terms() {
                 1. Aceptación de los Términos
               </h2>
               <p className="text-gray-600 dark:text-gray-300 leading-relaxed mb-4">
-                Al acceder y utilizar los servicios de AESTHECTIC, usted acepta estar sujeto a estos 
+                Al acceder y utilizar los servicios de AESTHETIC, usted acepta estar sujeto a estos 
                 términos y condiciones de uso. Si no está de acuerdo con alguna parte de estos términos, 
                 no debe utilizar nuestros servicios.
               </p>
@@ -47,7 +47,7 @@ export default function Terms() {
                   2.1 Naturaleza de los Servicios
                 </h3>
                 <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
-                  AESTHECTIC ofrece servicios de medicina estética realizados por profesionales 
+                  AESTHETIC ofrece servicios de medicina estética realizados por profesionales 
                   médicos calificados y licenciados. Todos los tratamientos requieren evaluación 
                   médica previa y consentimiento informado.
                 </p>
@@ -171,7 +171,7 @@ export default function Terms() {
                 9. Limitación de Responsabilidad
               </h2>
               <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
-                AESTHECTIC no será responsable por daños indirectos, incidentales, especiales o 
+                AESTHETIC no será responsable por daños indirectos, incidentales, especiales o 
                 consecuentes que resulten del uso de nuestros servicios, excepto en casos de 
                 negligencia grave o dolo, según lo establecido en la legislación colombiana.
               </p>
@@ -183,7 +183,7 @@ export default function Terms() {
                 10. Modificaciones
               </h2>
               <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
-                AESTHECTIC se reserva el derecho de modificar estos términos en cualquier momento. 
+                AESTHETIC se reserva el derecho de modificar estos términos en cualquier momento. 
                 Las modificaciones entrarán en vigor inmediatamente después de su publicación en 
                 el sitio web. Es responsabilidad del usuario revisar periódicamente estos términos.
               </p>
@@ -210,7 +210,7 @@ export default function Terms() {
                   Para preguntas sobre estos términos y condiciones, puede contactarnos:
                 </p>
                 <ul className="text-gray-600 dark:text-gray-300 space-y-1">
-                  <li><strong>Email:</strong> legal@aesthectic.com</li>
+                  <li><strong>Email:</strong> legal@aesthetic.com</li>
                   <li><strong>Teléfono:</strong> +57 321 770 6324</li>
                   <li><strong>WhatsApp:</strong> +57 321 770 6324</li>
                   <li><strong>Dirección:</strong> Bogotá, Colombia</li>

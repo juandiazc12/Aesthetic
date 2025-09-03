@@ -154,7 +154,7 @@ export default function Careers() {
 
   return (
       <>
-        <Head title="Oportunidades Laborales - AESTHECTIC" />
+        <Head title="Oportunidades Laborales - AESTHETIC" />
         
         <div className="max-w-6xl mx-auto py-8">
           {/* Header */}
@@ -163,7 +163,7 @@ export default function Careers() {
               Únete a Nuestro Equipo
             </h1>
             <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
-              Forma parte de AESTHECTIC y ayúdanos a transformar vidas a través de la medicina estética. 
+              Forma parte de AESTHETIC y ayúdanos a transformar vidas a través de la medicina estética. 
               Ofrecemos un ambiente profesional donde podrás crecer y desarrollar tu carrera.
             </p>
           </div>
@@ -324,7 +324,7 @@ export default function Careers() {
               <div>
                 <div className="text-3xl mb-3">📧</div>
                 <h4 className="font-medium text-gray-900 dark:text-white mb-2">Email</h4>
-                <p className="text-gray-600 dark:text-gray-300">rrhh@aesthectic.com</p>
+                <p className="text-gray-600 dark:text-gray-300">rrhh@aesthetic.com</p>
               </div>
               
               <div>
@@ -343,7 +343,7 @@ export default function Careers() {
             <div className="mt-8 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
               <p className="text-sm text-blue-800 dark:text-blue-200 text-center">
                 <strong>Nota:</strong> Solo contactaremos a los candidatos seleccionados para continuar 
-                en el proceso. Agradecemos tu interés en formar parte de AESTHECTIC.
+                en el proceso. Agradecemos tu interés en formar parte de AESTHETIC.
               </p>
             </div>
           </div>

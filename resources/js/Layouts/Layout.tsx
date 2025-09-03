@@ -45,7 +45,7 @@ export default function Layout({ children }: { children: React.ReactElement }) {
               href="/"
               className="text-xl md:text-2xl font-bold text-gray-800 dark:text-white hover:scale-110 transition-transform duration-300"
             >
-              AESTHECTIC
+              AESTHETIC
             </Link>
           </div>
 
@@ -146,7 +146,7 @@ export default function Layout({ children }: { children: React.ReactElement }) {
               <a
                 data-social="whatsapp"
                 aria-label="Whatsapp"
-                href="https://api.whatsapp.com/send?phone=+573217706324&text=Save%20this%20to%20your%20Favorites%20-%20@Aesthectic"
+                href="https://api.whatsapp.com/send?phone=+573217706324&text=Save%20this%20to%20your%20Favorites%20-%20@Aesthetic"
                 className="relative group transition-transform duration-300 transform hover:scale-110"
                 target="_blank"
               >

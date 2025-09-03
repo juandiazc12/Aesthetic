@@ -111,7 +111,7 @@ export default function PQRS() {
 
   return (
     <>
-      <Head title="PQRS - AESTHECTIC" />
+      <Head title="PQRS - AESTHETIC" />
 
       <div className="max-w-4xl mx-auto py-8">
         {/* Header */}
@@ -303,7 +303,7 @@ export default function PQRS() {
               <h4 className="font-medium text-gray-900 dark:text-white mb-2">
                 Email
               </h4>
-              <p className="text-gray-600 dark:text-gray-300">pqrs@aesthectic.com</p>
+              <p className="text-gray-600 dark:text-gray-300">pqrs@aesthetic.com</p>
               <p className="text-sm text-gray-500 dark:text-gray-400">
                 Respuesta en 24-48 horas
               </p>
