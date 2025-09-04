@@ -92,6 +92,9 @@ Route::get('/dashboard/daily-bookings', [DashboardScreen::class, 'getDailyBookin
 Route::get('/dashboard/metrics-ranking', [DashboardScreen::class, 'getMetricsAndRanking'])
     ->name('platform.dashboard.metrics-ranking');
 
+Route::get('/dashboard/data', [DashboardScreen::class, 'getDashboardData'])
+    ->name('platform.dashboard.data');
+
 Route::screen('/bookings/{booking}/edit', BookingEditScreen::class)
     ->name('platform.bookings.edit')
     ->breadcrumbs(fn (Trail $trail, $booking) => $trail

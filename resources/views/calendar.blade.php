@@ -329,20 +329,61 @@
                         center: 'title',
                         right: 'dayGridMonth,timeGridWeek,timeGridDay'
                     },
+                    navLinks: false,
+                    dateClick: function(info) {
+                        info.jsEvent.preventDefault();
+                        calendar.changeView('timeGridDay', info.dateStr);
+                    },
+                    datesSet: function(dateInfo) {
+                        let url = '{{ route("platform.dashboard.data") }}';
+                        const viewType = dateInfo.view.type;
+
+                        if (viewType === 'dayGridMonth') {
+                            const month = dateInfo.view.currentStart.getMonth() + 1;
+                            const year = dateInfo.view.currentStart.getFullYear();
+                            console.log(`Fetching data for month: ${year}-${month}`);
+                            url += `?month=${month}&year=${year}`;
+                        } else {
+                            const start = dateInfo.startStr;
+                            const end = dateInfo.endStr;
+                            console.log(`Fetching data for range: ${start} to ${end}`);
+                            url += `?start=${start}&end=${end}`;
+                        }
+
+                        fetch(url)
+                            .then(response => response.json())
+                            .then(data => {
+                                console.log('Received data:', data);
+                                if (data.error) {
+                                    console.error('Error from server:', data.error);
+                                    return;
+                                }
+
+                                const metricsContainer = document.getElementById('dashboard-metrics-container');
+                                const rankingContainer = document.getElementById('service-ranking-container');
+
+                                if (metricsContainer && data.metrics_html) {
+                                    console.log('Updating metrics HTML');
+                                    metricsContainer.innerHTML = data.metrics_html;
+                                }
+
+                                if (rankingContainer && data.ranking_html) {
+                                    console.log('Updating ranking HTML');
+                                    rankingContainer.innerHTML = data.ranking_html;
+                                }
+                            })
+                            .catch(error => console.error('Error fetching dashboard data:', error));
+                    },
                     events: function (fetchInfo, successCallback, failureCallback) {
                         var url = '{{ route("platform.calendar.events") }}';
-                        var currentDate = new Date('{{ Carbon\Carbon::today("America/Bogota")->format("Y-m-d") }}'); // Forzar fecha actual
                         var urlParams = new URLSearchParams({
+                            start: fetchInfo.startStr,
+                            end: fetchInfo.endStr,
                             professional_id: document.getElementById('calendar_professional_id')?.value || '',
                             status: document.getElementById('calendar_status')?.value || 'all',
-                            month: currentDate.getMonth() + 1, // Usar mes actual (7)
-                            year: currentDate.getFullYear(), // Usar año actual (2025)
                             nocache: new Date().getTime()
                         });
 
-                        console.log('Fecha forzada:', currentDate);
-                        console.log('Mes calculado:', currentDate.getMonth() + 1);
-                        console.log('Año calculado:', currentDate.getFullYear());
                         console.log('Solicitando eventos para:', url + '?' + urlParams.toString());
 
                         fetch(url + '?' + urlParams.toString(), {
@@ -409,23 +450,10 @@
                     eventClick: function (info) {
                         window.location.href = info.event.url;
                     },
-                    dateClick: function (info) {
-                        console.log('Fecha seleccionada:', info.dateStr);
-                        document.querySelectorAll('.fc-day-selected').forEach(function (el) {
-                            el.classList.remove('fc-day-selected');
-                        });
-
-                        info.dayEl.classList.add('fc-day-selected');
-
-                        var urlParams = new URLSearchParams({
-                            selected_date: info.dateStr,
-                            professional_id: document.getElementById('calendar_professional_id')?.value || '',
-                            status: document.getElementById('calendar_status')?.value || 'all'
-                        });
-
-                        var newUrl = '{{ route("platform.dashboard") }}?' + urlParams.toString();
-                        window.history.pushState({}, '', newUrl);
-                        window.location.href = newUrl;
+                    dateClick: function(info) {
+                        // Previene la recarga y cambia la vista para la actualización dinámica
+                        info.jsEvent.preventDefault();
+                        calendar.changeView('timeGridDay', info.dateStr);
                     },
                     height: 'auto',
                     aspectRatio: 1.5,
@@ -434,6 +462,9 @@
                 });
 
                 calendar.render();
+
+                // Directiva para que Turbolinks no interfiera con el calendario
+                document.getElementById('calendar').setAttribute('data-turbolinks-permanent', '');
                 calendarInitialized = true;
             }
 

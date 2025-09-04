@@ -159,16 +159,13 @@ class DashboardScreen extends Screen
         $queryData = $this->query(request());
 
         $layouts = [
-            Layout::metrics([
-                'Total de Citas' => 'metrics.total_bookings',
-                'Citas de Hoy' => 'metrics.bookings_today',
-                'Ingresos Mensuales' => 'metrics.monthly_revenue',
+            Layout::view('dashboard-metrics-container', [
+                'metrics' => $queryData['metrics'],
             ]),
             Layout::view('calendar'),
-            Layout::table('service_ranking', [
-                TD::make('service_name', 'Servicio')->render(fn($item) => $item['service_name']),
-                TD::make('count', 'Número de Citas')->render(fn($item) => $item['count']),
-            ])->title('Ranking de Servicios'),
+            Layout::view('service-ranking-container', [
+                'service_ranking' => $queryData['service_ranking'],
+            ]),
             Layout::table('daily_bookings', [
                 TD::make('service', 'Servicio')->render(fn($item) => $item['service']),
                 TD::make('professional', 'Profesional')->render(fn($item) => $item['professional']),
@@ -191,25 +188,22 @@ class DashboardScreen extends Screen
 
             $professionalId = $request->input('professional_id', '');
             $status = $request->input('status', 'all');
-            $month = $request->input('month', Carbon::today('America/Bogota')->month); // 7 (julio)
-            $year = $request->input('year', Carbon::today('America/Bogota')->year); // 2025
+            $start = $request->input('start', Carbon::now('America/Bogota')->startOfMonth()->toDateString());
+            $end = $request->input('end', Carbon::now('America/Bogota')->endOfMonth()->toDateString());
 
             Log::debug('Parámetros recibidos:', [
                 'professional_id' => $professionalId,
                 'status' => $status,
-                'month' => $month,
-                'year' => $year
+                'start' => $start,
+                'end' => $end
             ]);
 
             if (!$isAdmin) {
                 $professionalId = $user ? $user->id : null;
             }
 
-            $startOfMonth = Carbon::create($year, $month, 1, 0, 0, 0, 'America/Bogota')->startOfMonth(); // 2025-07-01
-            $endOfMonth = $startOfMonth->copy()->endOfMonth(); // 2025-07-31
-
             $bookingsQuery = Booking::with(['service', 'professional', 'customer'])
-                ->whereBetween('scheduled_at', [$startOfMonth, $endOfMonth])
+                ->whereBetween('scheduled_at', [$start, $end])
                 ->when($professionalId, fn($q) => $q->where('professional_id', $professionalId))
                 ->when($status !== 'all', fn($q) => $q->where('status', $status));
 
@@ -411,5 +405,88 @@ class DashboardScreen extends Screen
         Log::info('Refresh called', $request->only(['professional_id', 'status', 'selected_date', 'month', 'year']));
 
         return redirect()->route('platform.dashboard', $request->only(['professional_id', 'status', 'selected_date', 'month', 'year']));
+    }
+
+    public function getDashboardData(Request $request): JsonResponse
+    {
+        try {
+            $user = auth()->user();
+            $roles = $user ? $user->roles()->pluck('slug')->toArray() : [];
+            $isAdmin = in_array('admin', $roles);
+
+            $professionalId = $request->input('professional_id', '');
+            $status = $request->input('status', 'all');
+
+            if (!$isAdmin) {
+                $professionalId = $user ? $user->id : null;
+            }
+
+            $baseQuery = Booking::query();
+            $revenueQuery = Booking::query();
+
+            if ($request->has('month') && $request->has('year')) {
+                $month = $request->input('month');
+                $year = $request->input('year');
+                
+                $baseQuery->whereMonth('scheduled_at', $month)->whereYear('scheduled_at', $year);
+                $revenueQuery->whereMonth('payment_completed_at', $month)->whereYear('payment_completed_at', $year);
+            } else {
+                $start = $request->input('start', Carbon::now('America/Bogota')->startOfMonth()->toDateString());
+                $end = $request->input('end', Carbon::now('America/Bogota')->endOfMonth()->toDateString());
+
+                $baseQuery->whereBetween('scheduled_at', [$start, $end]);
+                $revenueQuery->whereBetween('payment_completed_at', [$start, $end]);
+            }
+
+            // Apply common filters
+            $baseQuery->when($professionalId, fn($q) => $q->where('professional_id', $professionalId))
+                      ->when($status !== 'all', fn($q) => $q->where('status', $status));
+
+            $revenueQuery->where('payment_status', 'paid')
+                         ->whereIn('status', ['pending', 'completed'])
+                         ->when($professionalId, fn($q) => $q->where('professional_id', $professionalId))
+                         ->when($status !== 'all', fn($q) => $q->where('status', $status));
+
+            $totalBookings = (clone $baseQuery)->count();
+            $periodRevenue = $revenueQuery->sum('total_amount');
+
+            $serviceRanking = (clone $baseQuery)
+                ->select('service_id', \Illuminate\Support\Facades\DB::raw('COUNT(*) as count'))
+                ->groupBy('service_id')
+                ->orderBy('count', 'DESC')
+                ->take(5)
+                ->with('service')
+                ->get()
+                ->map(function ($item) {
+                    return [
+                        'service_name' => is_object($item->service) ? $item->service->name : 'Sin servicio',
+                        'count' => $item->count,
+                    ];
+                })->toArray();
+
+            $bookingsToday = Booking::whereDate('scheduled_at', Carbon::today('America/Bogota')->format('Y-m-d'))
+                ->when($professionalId, fn($q) => $q->where('professional_id', $professionalId))
+                ->when($status !== 'all', fn($q) => $q->where('status', $status))
+                ->count();
+
+            $metrics = [
+                'total_bookings' => ['value' => $totalBookings],
+                'bookings_today' => ['value' => $bookingsToday],
+                'monthly_revenue' => ['value' => $periodRevenue !== null ? number_format((float) $periodRevenue, 0) : '0'],
+            ];
+
+            $metricsHtml = view('_metrics', compact('metrics'))->render();
+            $rankingHtml = view('_service_ranking', ['service_ranking' => $serviceRanking])->render();
+
+            return response()->json([
+                'metrics_html' => $metricsHtml,
+                'ranking_html' => $rankingHtml,
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error in getDashboardData: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+            ]);
+            return response()->json(['error' => 'Error al cargar los datos del dashboard: ' . $e->getMessage()], 500);
+        }
     }
 }
