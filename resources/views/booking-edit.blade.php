@@ -22,6 +22,21 @@
             overflow: hidden;
         }
 
+        .spinner {
+            display: inline-block;
+            width: 1rem;
+            height: 1rem;
+            vertical-align: middle;
+            border: 2px solid #fff;
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 0.75s linear infinite;
+            margin-right: 0.5rem;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
         .booking-edit-container:hover {
             transform: translateY(-8px);
             box-shadow: 0 10px 24px rgba(0, 0, 0, 0.2);
@@ -201,6 +216,12 @@
 
             function updateStatus(status) {
                 if (confirm(`¿Estás seguro de que quieres ${status === 'cancelled' ? 'cancelar' : 'completar'} esta cita?`)) {
+                    // Deshabilitar botones y mostrar estado de carga
+                    cancelBtn.disabled = true;
+                    completeBtn.disabled = true;
+                    cancelBtn.innerHTML = '<span class="spinner"></span> Procesando...';
+                    completeBtn.innerHTML = '<span class="spinner"></span> Procesando...';
+
                     console.log(`Sending ${status} request to:`, updateStatusUrl);
                     fetch(updateStatusUrl, {
                         method: 'POST',
@@ -221,15 +242,25 @@
                         .then(data => {
                             console.log('Response data:', data);
                             if (data.success) {
-                                alert(`Cita ${status === 'cancelled' ? 'cancelada' : 'completada'} exitosamente`);
+                                // Redirigir inmediatamente sin mostrar alert
                                 window.location.href = data.redirect || '{{ route("platform.dashboard") }}';
                             } else {
                                 alert('Error: ' + (data.error || `No se pudo ${status === 'cancelled' ? 'cancelar' : 'completar'} la cita`));
+                                // Restaurar botones
+                                cancelBtn.disabled = !{{ $booking['canCancel'] ? 'true' : 'false' }};
+                                completeBtn.disabled = !{{ $booking['canComplete'] ? 'true' : 'false' }};
+                                cancelBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg> Cancelar';
+                                completeBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg> Completar';
                             }
                         })
                         .catch(error => {
                             console.error('Error:', error);
                             alert(`Error al ${status === 'cancelled' ? 'cancelar' : 'completar'} la cita: ` + error.message);
+                            // Restaurar botones
+                            cancelBtn.disabled = !{{ $booking['canCancel'] ? 'true' : 'false' }};
+                            completeBtn.disabled = !{{ $booking['canComplete'] ? 'true' : 'false' }};
+                            cancelBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg> Cancelar';
+                            completeBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg> Completar';
                         });
                 }
             }
